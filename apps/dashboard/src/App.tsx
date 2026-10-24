@@ -11,7 +11,7 @@ import {
 } from "wagmi";
 import { signMessage } from "wagmi/actions";
 import { fetchNonce, type Team, useSession } from "./api.js";
-import { chain } from "./config.js";
+import { chain, isMainnet, networkName, otherNetworkUrl } from "./config.js";
 import { short } from "./format.js";
 import { Features } from "./pages/Features.js";
 import { Links } from "./pages/Links.js";
@@ -90,7 +90,12 @@ function LiveStrip({ merchant }: { merchant: string | null }) {
     <div className="strip" aria-label="Ağ durumu">
       <div className="wrap strip-row">
         <span>
-          <em>Ağ</em> {chain.name}
+          <em>Ağ</em> {networkName}
+          {otherNetworkUrl && (
+            <a className="strip-link" href={otherNetworkUrl}>
+              {isMainnet ? "Testnet'e geç" : "Mainnet'e geç"}
+            </a>
+          )}
         </span>
         <span>
           <em>Blok</em> <i className="live" aria-hidden="true" />

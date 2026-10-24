@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:mainnet": "vite build --mode mainnet --outDir dist-mainnet",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview"

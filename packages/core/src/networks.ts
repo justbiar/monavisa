@@ -39,13 +39,6 @@ const PERMIT2: Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 const ENTRYPOINT_V07: Address = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 const MULTICALL3: Address = "0xcA11bde05977b3631167028862bE2a173976CA11";
 
-const NOT_DEPLOYED: MonaVisaContracts = {
-  planFactory: null,
-  subscriptionRegistry: null,
-  autopayModule: null,
-  feeCollector: null,
-  sessionVault: null,
-};
 
 export const networks: Record<SupportedChainId, Network> = {
   [MONAD_CHAIN_ID]: {
@@ -59,7 +52,13 @@ export const networks: Record<SupportedChainId, Network> = {
     permit2: PERMIT2,
     entryPointV07: ENTRYPOINT_V07,
     multicall3: MULTICALL3,
-    contracts: NOT_DEPLOYED,
+    contracts: {
+      planFactory: "0xB6545c301e655CE45f64A44B51434466597D8f49",
+      subscriptionRegistry: "0x67ce32FC1CcC61d7CAC895A707DD2353C3ACE696",
+      autopayModule: "0xf5a46AE08fDA674D0a26Af661575867f37a612b7",
+      feeCollector: "0x438e9181b308E502CA72907a2D20b8389Cc2Dd3F",
+      sessionVault: "0x6A3455667bEF02F014bB54dF3A66987b9Bd77F2c",
+    },
   },
   [MONAD_TESTNET_CHAIN_ID]: {
     chainId: MONAD_TESTNET_CHAIN_ID,

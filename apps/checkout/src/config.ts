@@ -1,4 +1,4 @@
-import { getChain } from "@monavisa/core";
+import { MONAD_CHAIN_ID, getChain } from "@monavisa/core";
 import type { MonaVisaAddresses } from "@monavisa/react";
 import { type Address, type Chain, defineChain, http, isAddress } from "viem";
 import { createConfig } from "wagmi";
@@ -9,6 +9,11 @@ export const chainId = local?.chainId ?? Number(import.meta.env.VITE_CHAIN_ID ??
 const rpcUrl = import.meta.env.VITE_RPC_URL;
 
 const base = getChain(chainId);
+
+export const isMainnet = chainId === MONAD_CHAIN_ID;
+/** viem calls mainnet just "Monad"; spell it out next to the testnet. */
+export const networkName = isMainnet ? "Monad Mainnet" : base.name;
+export const otherNetworkUrl = import.meta.env.VITE_OTHER_NETWORK_URL?.replace(/\/$/, "") || null;
 /** On a local fork the explorer would point at the real network, so it is dropped. */
 export const chain: Chain = rpcUrl
   ? defineChain({

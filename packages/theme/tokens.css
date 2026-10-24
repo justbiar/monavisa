@@ -146,6 +146,15 @@ body::before {
 .strip .num {
   font-variant-numeric: tabular-nums;
 }
+.strip-link {
+  margin-left: 12px;
+  color: inherit;
+  opacity: 0.7;
+  text-underline-offset: 3px;
+}
+.strip-link:hover {
+  opacity: 1;
+}
 .live {
   display: inline-block;
   width: 8px;

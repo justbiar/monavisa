@@ -5,5 +5,14 @@
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
+  },
+  // Monad mainnet build, deployed as monavisa-checkout-mainnet: wrangler deploy --env mainnet
+  "env": {
+    "mainnet": {
+      "assets": {
+        "directory": "./dist-mainnet",
+        "not_found_handling": "single-page-application"
+      }
+    }
   }
 }

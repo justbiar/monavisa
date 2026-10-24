@@ -21,5 +21,24 @@
     "CORS_ORIGINS": "https://monavisa-dashboard.selfbiar.workers.dev,https://monavisa-checkout.selfbiar.workers.dev",
     "SIWE_DOMAINS": "monavisa-dashboard.selfbiar.workers.dev",
     "CHECKOUT_URL": "https://monavisa-checkout.selfbiar.workers.dev"
+  },
+  // Monad mainnet, deployed as monavisa-api-mainnet: wrangler deploy --env mainnet
+  "env": {
+    "mainnet": {
+      "triggers": { "crons": ["* * * * *"] },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "monavisa-mainnet", "database_id": "e9c40aed-f853-426a-a9dd-a1f18b169ff0" }
+      ],
+      "vars": {
+        "CHAIN_ID": "143",
+        "RPC_URL": "https://rpc.monad.xyz",
+        "START_BLOCK": "116208992",
+        "LOG_RANGE": "100",
+        "BLOCK_TAG": "finalized",
+        "CORS_ORIGINS": "https://monavisa-dashboard-mainnet.selfbiar.workers.dev,https://monavisa-checkout-mainnet.selfbiar.workers.dev",
+        "SIWE_DOMAINS": "monavisa-dashboard-mainnet.selfbiar.workers.dev",
+        "CHECKOUT_URL": "https://monavisa-checkout-mainnet.selfbiar.workers.dev"
+      }
+    }
   }
 }

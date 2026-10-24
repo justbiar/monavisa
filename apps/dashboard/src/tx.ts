@@ -7,6 +7,7 @@ import {
   waitForTransactionReceipt,
   writeContract,
 } from "wagmi/actions";
+import { chain, networkName } from "./config.js";
 
 export interface ContractCall {
   address: Address;
@@ -18,7 +19,7 @@ export interface ContractCall {
 /**
  * Sends a contract call from the connected wallet. Gas and fees are estimated on the dashboard's
  * own RPC and passed in, so the wallet only signs and broadcasts: wallets often have a stale or
- * failing RPC configured for Monad Testnet and then fail with "An unknown RPC error occurred".
+ * failing RPC configured for Monad and then fail with "An unknown RPC error occurred".
  * The estimate also surfaces real revert reasons before the wallet opens.
  */
 export async function sendContractTx(
@@ -62,7 +63,7 @@ export function errorText(err: unknown): string {
   if (e.details && !message.includes(e.details)) parts.push(e.details);
   if (e.name === "UnknownRpcError" || /unknown RPC error/i.test(message)) {
     parts.push(
-      "Cüzdanın Monad Testnet RPC'si yanıt vermiyor olabilir. Cüzdanın ağ ayarlarında RPC adresini https://testnet-rpc.monad.xyz yapıp tekrar dene.",
+      `Cüzdanın ${networkName} RPC'si yanıt vermiyor olabilir. Cüzdanın ağ ayarlarında RPC adresini ${chain.rpcUrls.default.http[0]} yapıp tekrar dene.`,
     );
   }
   return parts.join(" · ");

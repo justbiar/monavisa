@@ -19,7 +19,7 @@ import {
   useDisconnect,
   useSwitchChain,
 } from "wagmi";
-import { apiUrl, chain, explorerTxUrl } from "./config.js";
+import { apiUrl, chain, explorerTxUrl, isMainnet, networkName, otherNetworkUrl } from "./config.js";
 
 interface Route {
   planId: bigint | null;
@@ -147,7 +147,12 @@ function LiveStrip() {
     <div className="strip" aria-label="Ağ durumu">
       <div className="wrap strip-row">
         <span>
-          <em>Ağ</em> {chain.name}
+          <em>Ağ</em> {networkName}
+          {otherNetworkUrl && (
+            <a className="strip-link" href={otherNetworkUrl}>
+              {isMainnet ? "Testnet'e geç" : "Mainnet'e geç"}
+            </a>
+          )}
         </span>
         <span>
           <em>Blok</em> <i className="live" aria-hidden="true" />
