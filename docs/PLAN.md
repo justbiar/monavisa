@@ -86,6 +86,8 @@ Hepsi UUPS proxy arkasında, `AccessControl` ile yönetilir. Admin rolü bir Saf
 - Yalnızca `AutopayModule` dönemi uzatabilir.
 - NFT varsayılan olarak transfer edilemez (soulbound). Plan bazında açılabilir.
 
+> **Faz 1 durumu (2026-10-24):** abone ol, yenile, iptal, grace ve süre dolumu uygulandı. Upgrade, downgrade ve proration henüz yok, Faz 2'de eklenecek. Yeni fiyat şu an yeni bir plan olarak açılıyor.
+
 ### 3.3 `AutopayModule`
 
 İki çekim yolu, aynı arayüz:
