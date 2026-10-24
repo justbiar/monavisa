@@ -12,6 +12,8 @@ interface ImportMetaEnv {
   readonly VITE_CHAIN_ID?: string;
   /** Overrides the chain's default RPC, e.g. a local anvil fork. */
   readonly VITE_RPC_URL?: string;
+  /** Mona Visa platform API, for plan names and payment links. Optional. */
+  readonly VITE_API_URL?: string;
   /** Adds a "Dev wallet" connector for this unlocked anvil account. Never set in production. */
   readonly VITE_DEV_ACCOUNT?: string;
 }

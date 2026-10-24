@@ -1,0 +1,13 @@
+{
+  "name": "@monavisa/theme",
+  "version": "0.0.0",
+  "description": "Mona Visa design tokens and shared component styles (Ramp-like editorial system)",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./tokens.css"
+  },
+  "files": [
+    "tokens.css"
+  ]
+}

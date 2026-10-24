@@ -1,166 +1,7 @@
-/* Ramp-style editorial checkout: black-and-white pages with one highlighter. Bone canvas, white
-   hairline-bordered cards, a single weight of type, and #e4f222 only where money moves (the pay
-   button, the live block counter, the active step, a completed payment). Light only, by design. */
-:root {
-  --color-highlighter-yellow: #e4f222;
-  --color-ink: #0c0a08;
-  --color-obsidian: #1a1919;
-  --color-paper: #ffffff;
-  --color-bone: #f4f2f0;
-  --color-ash: #6d6c6b;
-  --color-hairline: #e5e7eb;
-  --color-smoke: #d3d3d3;
-  --color-input-border: rgba(33, 33, 33, 0.1);
+/* Checkout layout on the shared Mona Visa theme: the order summary sits on the canvas like an
+   editorial column, the wallet panel is the one card. */
+@import "@monavisa/theme/tokens.css";
 
-  /* lausanne is licensed; Inter is the documented substitute. */
-  --font-sans: "lausanne", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-
-  --text-caption: 10px;
-  --text-small: 13px;
-  --text-ui: 14px;
-  --text-body: 16px;
-  --text-subheading: 20px;
-  --text-heading-sm: 24px;
-  --text-heading: 28px;
-  --text-heading-lg: 40px;
-  --text-display: 64px;
-
-  --radius-buttons: 6px;
-  --radius-tags: 6px;
-  --radius-inputs: 10px;
-  --radius-wash: 12px;
-  --radius-cards: 16px;
-
-  --page-max-width: 1200px;
-  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
-
-  color-scheme: light;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  background: var(--color-bone);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: var(--text-body);
-  line-height: 1.5;
-  font-feature-settings: "ss01" on;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* One weight everywhere: hierarchy comes from size and tracking. */
-b,
-strong,
-h1,
-h2,
-h3,
-button {
-  font-weight: 400;
-}
-
-p {
-  margin: 0;
-}
-
-.wrap {
-  width: 100%;
-  max-width: var(--page-max-width);
-  margin-inline: auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-
-/* ---------- navigation ---------- */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0 0 auto;
-  height: env(safe-area-inset-top, 0px);
-  z-index: 10;
-  background: var(--color-paper);
-}
-.nav {
-  position: sticky;
-  top: env(safe-area-inset-top, 0px);
-  z-index: 5;
-  background: var(--color-paper);
-  border-bottom: 1px solid var(--color-hairline);
-  box-shadow: rgba(255, 255, 255, 0.6) 0 0 2px 0 inset;
-}
-.nav-row {
-  height: 62px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.brand {
-  font-size: var(--text-subheading);
-  letter-spacing: -0.01em;
-}
-.nav-meta {
-  font-size: var(--text-small);
-  color: var(--color-ash);
-}
-
-/* ---------- live strip ---------- */
-.strip {
-  background: var(--color-obsidian);
-  color: var(--color-paper);
-}
-.strip-row {
-  min-height: 40px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 32px;
-  padding-block: 10px;
-  font-size: var(--text-ui);
-}
-.strip em,
-.lines dt,
-.step-detail,
-label {
-  font-style: normal;
-  font-size: var(--text-caption);
-  line-height: 2.2;
-  letter-spacing: 0.018em;
-  text-transform: uppercase;
-  color: var(--color-ash);
-}
-.strip em {
-  margin-right: 8px;
-}
-.strip .num {
-  font-variant-numeric: tabular-nums;
-}
-.live {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 6px;
-  border-radius: 2px;
-  background: var(--color-highlighter-yellow);
-  vertical-align: 1px;
-  animation: live 1.6s var(--ease) infinite alternate;
-}
-@keyframes live {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.35;
-  }
-}
-
-/* ---------- page ---------- */
 .page {
   display: grid;
   gap: 64px;
@@ -178,7 +19,6 @@ label {
   color: var(--color-ash);
 }
 
-/* The summary sits on the canvas like an editorial column; the panel is the one card. */
 .summary {
   display: grid;
   gap: 24px;
@@ -205,6 +45,10 @@ label {
   letter-spacing: -0.01em;
   text-wrap: balance;
 }
+.plan-description {
+  color: var(--color-ash);
+  max-width: 52ch;
+}
 .price {
   display: flex;
   align-items: baseline;
@@ -222,179 +66,12 @@ label {
   color: var(--color-ash);
 }
 
-.lines {
-  margin: 0;
-  display: grid;
-  border-top: 1px solid var(--color-ink);
-}
-.lines > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-hairline);
-}
-.lines dd {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-.lines .total {
-  border-bottom-color: var(--color-ink);
-}
-.lines .total dt {
-  color: var(--color-ink);
-}
-.lines .total dd {
-  font-size: var(--text-subheading);
-}
-.lines.compact {
-  border-top-color: var(--color-hairline);
-}
-.lines.compact > div {
-  padding: 8px 0;
-}
-
-/* ---------- panel ---------- */
-.panel {
-  background: var(--color-paper);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-cards);
-  padding: 24px;
-  min-width: 0;
-}
-.panel h2 {
-  margin: 0;
-  font-size: var(--text-heading-sm);
-  line-height: 1.17;
-}
-
-.stack {
-  display: grid;
-  gap: 16px;
-}
-.stack.tight {
-  gap: 8px;
-}
-.row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.muted {
-  color: var(--color-ash);
-  margin: 0;
-}
-.mono {
-  font-family: var(--font-mono);
-  font-size: var(--text-small);
-}
-.hash {
-  overflow-wrap: anywhere;
-}
-
-/* ---------- buttons ---------- */
-.btn {
-  appearance: none;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font: 400 var(--text-body) / 1 var(--font-sans);
-  font-feature-settings: "ss01" on;
-  color: var(--color-ink);
-  background: transparent;
-  border: 1px solid var(--color-ink);
-  border-radius: var(--radius-buttons);
-  padding: 0 12px;
-  cursor: pointer;
-  text-decoration: none;
-  transition:
-    background-color 0.3s var(--ease),
-    border-color 0.3s var(--ease),
-    color 0.3s var(--ease);
-}
-.btn:hover:not(:disabled) {
-  background: var(--color-bone);
-}
-.btn:disabled {
-  color: var(--color-ash);
-  border-color: var(--color-smoke);
-  cursor: not-allowed;
-}
-.btn.primary {
-  background: var(--color-highlighter-yellow);
-  border-color: var(--color-highlighter-yellow);
-  color: var(--color-ink);
-  padding: 0 20px;
-}
-.btn.primary:hover:not(:disabled) {
-  background: #d6e41a;
-  border-color: #d6e41a;
-}
-.btn.primary:disabled {
-  background: var(--color-bone);
-  border-color: var(--color-bone);
-}
-.btn.big {
-  min-height: 52px;
-}
-.btn.wallet {
-  justify-content: space-between;
-  text-align: left;
-  line-height: 1.3;
-  border-color: var(--color-hairline);
-  padding: 10px 16px;
-}
-.btn.wallet::after {
-  content: "→";
-  color: var(--color-ash);
-}
-.btn.wallet:hover:not(:disabled) {
-  border-color: var(--color-ink);
-}
-.link {
-  appearance: none;
-  background: none;
-  border: 0;
-  padding: 4px 6px;
-  margin-left: auto;
-  border-radius: var(--radius-buttons);
-  color: var(--color-ash);
-  font: 400 var(--text-small) var(--font-sans);
-  cursor: pointer;
-  transition:
-    background-color 0.3s var(--ease),
-    color 0.3s var(--ease);
-}
-.link:hover {
-  background: var(--color-bone);
-  color: var(--color-ink);
-}
-.btn:focus-visible,
-.link:focus-visible,
-input:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--color-ink);
-  outline-offset: 2px;
-}
-
-/* ---------- account ---------- */
-.account {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.panel .account {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--color-hairline);
 }
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--color-ink);
+.account .link {
+  margin-left: auto;
 }
 
 /* ---------- steps ---------- */
@@ -438,7 +115,11 @@ a:focus-visible {
   color: var(--color-paper);
 }
 .step-detail {
+  font-size: var(--text-caption);
   line-height: 1.6;
+  letter-spacing: 0.018em;
+  text-transform: uppercase;
+  color: var(--color-ash);
   margin-top: 2px;
 }
 
@@ -452,76 +133,6 @@ a:focus-visible {
 }
 .cap b {
   color: var(--color-ink);
-}
-
-/* ---------- notices ---------- */
-.notice {
-  border-radius: var(--radius-wash);
-  padding: 12px 16px;
-  font-size: var(--text-ui);
-  background: var(--color-bone);
-  color: var(--color-ink);
-  overflow-wrap: anywhere;
-}
-.notice.warn,
-.notice.error {
-  background: var(--color-paper);
-  border: 1px solid var(--color-ink);
-}
-.notice.warn::before,
-.notice.error::before {
-  display: block;
-  font-size: var(--text-caption);
-  line-height: 2.2;
-  letter-spacing: 0.018em;
-  text-transform: uppercase;
-  color: var(--color-ash);
-}
-.notice.error::before {
-  content: "Hata";
-}
-.notice.warn::before {
-  content: "Dikkat";
-}
-/* A completed payment is a money signal, so it gets the highlighter. */
-.notice.ok {
-  background: var(--color-highlighter-yellow);
-}
-.notice a {
-  color: inherit;
-  text-underline-offset: 3px;
-}
-
-/* ---------- status ---------- */
-.status-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.pill {
-  font-size: var(--text-caption);
-  line-height: 2.2;
-  letter-spacing: 0.018em;
-  text-transform: uppercase;
-  padding: 0 8px;
-  border-radius: var(--radius-tags);
-  border: 1px solid var(--color-hairline);
-  color: var(--color-ash);
-}
-.pill.active {
-  background: var(--color-highlighter-yellow);
-  border-color: var(--color-highlighter-yellow);
-  color: var(--color-ink);
-}
-.pill.past_due {
-  border-color: var(--color-ink);
-  color: var(--color-ink);
-}
-.pill.canceled,
-.pill.expired {
-  background: var(--color-bone);
-  border-color: var(--color-bone);
 }
 
 /* ---------- landing ---------- */
@@ -552,20 +163,11 @@ a:focus-visible {
   flex-wrap: nowrap;
   gap: 0;
 }
-input {
-  flex: 1;
-  min-width: 0;
-  min-height: 52px;
-  font: 400 var(--text-body) var(--font-sans);
-  font-feature-settings: "ss01" on;
-  color: var(--color-ink);
-  background: var(--color-paper);
-  border: 1px solid var(--color-input-border);
-  border-radius: var(--radius-inputs);
-  padding: 0 16px 0 24px;
-}
 /* Composite CTA: the input sits flush against the highlighter button. */
 .landing-form input {
+  flex: 1;
+  min-height: 52px;
+  padding: 0 16px 0 24px;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -573,13 +175,6 @@ input {
   min-height: 52px;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-}
-
-.foot {
-  font-size: var(--text-small);
-  color: var(--color-ash);
-  border-top: 1px solid var(--color-hairline);
-  padding-top: 16px;
 }
 
 @media (max-width: 860px) {
@@ -590,9 +185,6 @@ input {
   .checkout {
     grid-template-columns: 1fr;
     gap: 32px;
-  }
-  .panel {
-    padding: 20px;
   }
   .plan-name {
     font-size: var(--text-heading);
@@ -605,14 +197,5 @@ input {
   }
   .landing > p {
     font-size: var(--text-subheading);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .live {
-    animation: none;
-  }
-  * {
-    transition: none !important;
   }
 }

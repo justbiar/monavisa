@@ -129,7 +129,9 @@ Agent tarafının tamamı burada:
 
 - Stack: Node.js, Hono, Postgres.
 - Auth: merchant için secret API key (`mv_sk_...`, yalnızca sha256 hash'i saklanır). Dashboard için SIWE Faz 3'te.
-- Uygulanan uçlar: `GET /v1/entitlements/:feature?customer=`, `GET /v1/customers/:address/subscriptions`, `GET /v1/customers/:address/invoices`, `GET/PUT /v1/features/:key`, `GET/POST /v1/webhook-endpoints`, `GET /health`.
+- Uygulanan uçlar: `GET /v1/entitlements/:feature?customer=`, `GET /v1/customers/:address/subscriptions`, `GET /v1/customers/:address/invoices`, `GET/PUT /v1/features/:key`, `GET/POST/DELETE /v1/webhook-endpoints`, `GET /health`.
+- Panel uçları (Faz 3): `POST /auth/nonce`, `POST /auth/login` (SIWE, `publicClient.verifySiweMessage` ile, akıllı hesaplar dahil), `POST /auth/logout`, `GET/PATCH /v1/me`, `GET /v1/overview`, `GET /v1/plans`, `PUT /v1/plans/:id/metadata`, `GET /v1/subscriptions`, `GET /v1/invoices`, `GET/POST/DELETE /v1/payment-links`, `GET/POST/DELETE /v1/api-keys` (yalnızca oturumla). Herkese açık: `GET /public/plans/:id`, `GET /public/payment-links/:id`.
+- Kimlik: `mv_sess_` oturum token'ı (7 gün) ya da `mv_sk_` API anahtarı. İkisinin de yalnızca sha256 hash'i saklanır. Nonce'lar tek kullanımlık ve 10 dakika geçerli.
 - Entitlement çözümleme: indexer'daki on-chain durum, feature ile plan eşleşmesi ve grace süresi. Usage limitleri, payment link, checkout session, mandate ve escrow kaynakları sonraki fazlarda.
 - Fatura: her `Charged` event'i bir fatura satırı, tx hash bağlantılı. PDF Faz 3'te.
 
@@ -204,8 +206,10 @@ Mandate {
 
 ## 7. Uygulamalar
 
-- `apps/dashboard` (Next.js): plan ve feature yönetimi, abone listesi, gelir grafikleri, webhook ayarları, API key'ler, checkout tasarım editörü.
-- `apps/checkout` (Vite + React, hazır): `/plan/<id>` hosted checkout. Cüzdan bağla, Permit2 tavanlı yetki ver, abone ol, durumu gör, iptal et. Plan adı ve satıcı etiketi bağlantıdan (`?name=&merchant=`) gelir, tutarlar ve satıcı adresi her zaman zincirden. Payment link kayıtları dashboard ile birlikte gelecek.
+- `apps/dashboard` (Vite + React, hazır): cüzdanla SIWE girişi; genel bakış (MRR, aktif abone, 30 günlük ve toplam gelir, son ödemeler); planlar (zincirde plan oluşturma, ad verme, satışı durdurma, checkout linki); aboneler; ödemeler; ödeme linkleri; ayarlar (mağaza adı, API anahtarları, webhook'lar). Gizli değerler bir kez gösterilir. Gelir grafikleri, feature yönetimi ve checkout tasarım editörü sonraki fazda.
+- `apps/checkout` (Vite + React, hazır): `/plan/<id>` ve ödeme linkleri için `/l/<id>`. Cüzdan bağla, Permit2 tavanlı yetki ver, abone ol, durumu gör, iptal et. Plan ve mağaza adları panelden (API) gelir, `?name=&merchant=` yalnızca API yoksa yedektir; tutarlar ve satıcı adresi her zaman zincirden.
+- `packages/theme`: iki uygulamanın paylaştığı Ramp benzeri token'lar ve bileşen stilleri.
+- Faz 3'ten kalan: PDF fatura, gelir grafiği, feature (entitlement) yönetim ekranı.
 - `apps/docs`: geliştirici dokümanı.
 - `examples/`: SaaS gating örneği, x402 korumalı API, MCP ile ödeme yapan agent.
 

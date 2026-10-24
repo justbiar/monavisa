@@ -1,0 +1,29 @@
+{
+  "name": "@monavisa/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mona Visa merchant dashboard: plans, subscribers, payments, payment links, API keys and webhooks",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@monavisa/core": "workspace:*",
+    "@monavisa/react": "workspace:*",
+    "@monavisa/theme": "workspace:*",
+    "@tanstack/react-query": "5.104.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "viem": "2.57.4",
+    "wagmi": "3.7.7"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.4"
+  }
+}

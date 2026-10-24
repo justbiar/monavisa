@@ -10,8 +10,10 @@ packages/core/    @monavisa/core: chains, addresses, ABIs, EIP-3009 typed data, 
 packages/node/    @monavisa/node: server SDK (entitlement checks, customers, features, webhook verification)
 packages/react/   @monavisa/react: wagmi v3 hooks (usePlan, useSubscription, useEntitlement, useCheckout, useManageSubscription)
 apps/platform/    Indexer, renewal keeper, webhook dispatcher and HTTP API
-apps/checkout/    Hosted checkout at /plan/<id> (Vite + React)
-scripts/          Local devnet seeding
+packages/theme/   @monavisa/theme: shared Ramp-like design tokens and component styles
+apps/checkout/    Hosted checkout at /plan/<id> and payment links at /l/<id> (Vite + React)
+apps/dashboard/   Merchant dashboard with Sign-In with Ethereum (Vite + React)
+scripts/          Local devnet seeding and platform runner
 pitch/            90 second pitch page
 ```
 
@@ -65,10 +67,12 @@ const { enabled } = await monavisa.checkEntitlement("pro_dashboard", { address: 
 
 ```bash
 anvil --fork-url https://testnet-rpc.monad.xyz --code-size-limit 131072
-scripts/local-devnet.sh                     # deploy, create 2 plans, fund 2 subscribers, write apps/checkout/.env.local
-pnpm --filter @monavisa/checkout dev         # http://localhost:5173/plan/1?name=Pro&merchant=Demo
+scripts/local-devnet.sh                     # deploy, create 2 plans, fund 2 subscribers, write .env.local files
+scripts/dev-platform.sh                     # API + indexer + webhooks on http://localhost:8787 (local Postgres db monavisa_dev)
+pnpm --filter @monavisa/dashboard dev        # http://localhost:5174, sign in as the merchant
+pnpm --filter @monavisa/checkout dev         # http://localhost:5173/plan/1 or a payment link /l/<id>
 ```
 
-The checkout shows a "Dev cüzdanı (anvil)" option that signs with an unlocked anvil account, so no keys or browser wallet are needed. The code size flag matches Monad's 128 KB limit.
+Both apps show a "Dev cüzdanı (anvil)" option that signs with an unlocked anvil account (the merchant in the dashboard, a subscriber in the checkout), so no keys or browser wallet are needed. The code size flag matches Monad's 128 KB limit.
 
 anvil's default keys are public, and on Monad testnet those addresses carry EIP-7702 delegations set by strangers. The seed script clears them on the fork for accounts 0 to 2. Account 3 keeps its delegation so the checkout path for accounts with code (on-chain Permit2 approval instead of a signature) can be tested by pointing `VITE_DEV_ACCOUNT` at it.

@@ -28,6 +28,9 @@ export const addressOverrides: Partial<MonaVisaAddresses> | undefined = local
 
 const devAccount = import.meta.env.VITE_DEV_ACCOUNT;
 
+/** Platform API for display data. Amounts never come from here; they are read from the chain. */
+export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || null;
+
 export const wagmiConfig = createConfig({
   chains: [chain],
   connectors: [

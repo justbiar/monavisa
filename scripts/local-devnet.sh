@@ -43,10 +43,19 @@ send "$MERCHANT" "$PLAN_FACTORY" "createPlan(address,uint96,uint32,uint32,uint32
 send "$DEPLOYER" "$USDC" "mint(address,uint256)" "$SUBSCRIBER" 1000000000
 send "$DEPLOYER" "$USDC" "mint(address,uint256)" "$SMART_SUBSCRIBER" 1000000000
 
+API="${API:-http://localhost:8787}"
 cat > "$ROOT/apps/checkout/.env.local" <<EOF
 VITE_USE_LOCAL_DEPLOYMENT=1
 VITE_RPC_URL=$RPC
+VITE_API_URL=$API
 VITE_DEV_ACCOUNT=$SUBSCRIBER
+EOF
+cat > "$ROOT/apps/dashboard/.env.local" <<EOF
+VITE_USE_LOCAL_DEPLOYMENT=1
+VITE_RPC_URL=$RPC
+VITE_API_URL=$API
+VITE_CHECKOUT_URL=http://localhost:5173
+VITE_DEV_ACCOUNT=$MERCHANT
 EOF
 
 echo
@@ -55,4 +64,5 @@ echo "Subscriber: $SUBSCRIBER (plain EOA, 1,000 mock USDC)"
 echo "Smart subscriber: $SMART_SUBSCRIBER (has code, 1,000 mock USDC). Set VITE_DEV_ACCOUNT to it to test that path."
 echo "Plan 1: 49 USDC / 30 days, 3 days grace"
 echo "Plan 2: 99 USDC / 30 days, 7 day trial"
-echo "Wrote apps/checkout/.env.local. Start it with: pnpm --filter @monavisa/checkout dev"
+echo "Wrote apps/checkout/.env.local and apps/dashboard/.env.local."
+echo "Next: scripts/dev-platform.sh, then pnpm --filter @monavisa/dashboard dev and pnpm --filter @monavisa/checkout dev"

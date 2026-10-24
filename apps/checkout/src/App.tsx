@@ -9,6 +9,7 @@ import {
   usePlan,
   useSubscription,
 } from "@monavisa/react";
+import { useQuery } from "@tanstack/react-query";
 import { type FormEvent, useEffect, useState } from "react";
 import {
   useBlockNumber,
@@ -18,22 +19,81 @@ import {
   useDisconnect,
   useSwitchChain,
 } from "wagmi";
-import { chain, explorerTxUrl } from "./config.js";
+import { apiUrl, chain, explorerTxUrl } from "./config.js";
 
 interface Route {
   planId: bigint | null;
-  /** Display labels from the link. Amounts and the merchant address always come from the chain. */
+  /** A payment link id from /l/<id>, resolved to a plan through the API. */
+  linkId: string | null;
+  /** Fallback labels from the URL, used only when the API has no names. */
   planName: string | null;
   merchantName: string | null;
 }
 
+/** Display labels for the summary. Amounts and the merchant address always come from the chain. */
+interface Display {
+  planName: string | null;
+  merchantName: string | null;
+  description: string | null;
+  linkLabel: string | null;
+}
+
 function parseRoute(): Route {
-  const match = window.location.pathname.match(/^\/plan\/(\d+)\/?$/);
+  const path = window.location.pathname;
+  const plan = path.match(/^\/plan\/(\d+)\/?$/);
+  const link = path.match(/^\/l\/([A-Za-z0-9_-]{4,32})\/?$/);
   const params = new URLSearchParams(window.location.search);
   return {
-    planId: match?.[1] ? BigInt(match[1]) : null,
+    planId: plan?.[1] ? BigInt(plan[1]) : null,
+    linkId: link?.[1] ?? null,
     planName: params.get("name"),
     merchantName: params.get("merchant"),
+  };
+}
+
+interface PublicPlan {
+  id: string;
+  name: string | null;
+  description: string | null;
+  merchantName: string | null;
+}
+
+async function getJson<T>(path: string): Promise<T | null> {
+  if (!apiUrl) return null;
+  const res = await fetch(`${apiUrl}${path}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return (await res.json()) as T;
+}
+
+/** Resolves a payment link to its plan and loads the merchant's names for the plan. */
+function useResolvedRoute(route: Route) {
+  const link = useQuery({
+    queryKey: ["link", route.linkId],
+    queryFn: () =>
+      getJson<{ label: string | null; plan: PublicPlan }>(`/public/payment-links/${route.linkId}`),
+    enabled: route.linkId !== null,
+    retry: false,
+  });
+  const planId = route.planId ?? (link.data ? BigInt(link.data.plan.id) : null);
+  const plan = useQuery({
+    queryKey: ["public-plan", planId?.toString()],
+    queryFn: () => getJson<PublicPlan>(`/public/plans/${planId}`),
+    enabled: planId !== null && route.linkId === null,
+    retry: false,
+  });
+  const info = link.data?.plan ?? plan.data ?? null;
+  const display: Display = {
+    planName: info?.name ?? route.planName,
+    merchantName: info?.merchantName ?? route.merchantName,
+    description: info?.description ?? null,
+    linkLabel: link.data?.label ?? null,
+  };
+  return {
+    planId,
+    display,
+    isLoading: link.isLoading || plan.isLoading,
+    linkMissing: route.linkId !== null && !link.isLoading && !link.data,
   };
 }
 
@@ -71,7 +131,7 @@ export function App() {
       </header>
       <LiveStrip />
       <div className="wrap page">
-        {route.planId === null ? <Landing /> : <Checkout route={route} planId={route.planId} />}
+        {route.planId === null && route.linkId === null ? <Landing /> : <Resolved route={route} />}
         <footer className="foot">
           Ödeme doğrudan satıcının cüzdanına gider. Mona Visa paranı hiçbir zaman tutmaz.
         </footer>
@@ -107,7 +167,13 @@ function Landing() {
   const [value, setValue] = useState("");
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const id = value.trim().match(/(\d+)\s*$/)?.[1];
+    const input = value.trim();
+    const link = input.match(/\/l\/([A-Za-z0-9_-]{4,32})\/?$/)?.[1];
+    if (link) {
+      window.location.href = `/l/${link}`;
+      return;
+    }
+    const id = input.match(/(\d+)\s*$/)?.[1];
     if (id) window.location.href = `/plan/${id}`;
   };
   return (
@@ -132,7 +198,24 @@ function Landing() {
   );
 }
 
-function Checkout({ route, planId }: { route: Route; planId: bigint }) {
+function Resolved({ route }: { route: Route }) {
+  const { planId, display, isLoading, linkMissing } = useResolvedRoute(route);
+  if (linkMissing) {
+    return (
+      <main className="checkout">
+        <div className="notice error">
+          Bu ödeme linki bulunamadı ya da artık geçerli değil. Satıcıdan yeni bir link iste.
+        </div>
+      </main>
+    );
+  }
+  if (isLoading || planId === null) {
+    return <main className="checkout loading">Plan yükleniyor…</main>;
+  }
+  return <Checkout display={display} planId={planId} />;
+}
+
+function Checkout({ display, planId }: { display: Display; planId: bigint }) {
   const { plan, isLoading, error } = usePlan(planId);
 
   if (isLoading) return <main className="checkout loading">Plan yükleniyor…</main>;
@@ -148,7 +231,7 @@ function Checkout({ route, planId }: { route: Route; planId: bigint }) {
 
   return (
     <main className="checkout">
-      <Summary plan={plan} route={route} />
+      <Summary plan={plan} display={display} />
       <section className="panel" aria-label="Ödeme">
         <WalletGate>
           <PlanAction plan={plan} />
@@ -158,7 +241,7 @@ function Checkout({ route, planId }: { route: Route; planId: bigint }) {
   );
 }
 
-function Summary({ plan, route }: { plan: Plan; route: Route }) {
+function Summary({ plan, display }: { plan: Plan; display: Display }) {
   const fee = plan.charge - plan.price;
   const amount = (v: bigint) => formatAmount(v, plan.tokenDecimals);
   const period = periodTr(plan.period);
@@ -166,17 +249,18 @@ function Summary({ plan, route }: { plan: Plan; route: Route }) {
     <section className="summary" aria-label="Sipariş özeti">
       <div className="merchant">
         <span className="avatar" aria-hidden="true">
-          {(route.merchantName ?? "M").slice(0, 1).toUpperCase()}
+          {(display.merchantName ?? "M").slice(0, 1).toUpperCase()}
         </span>
         <div>
-          <div className="merchant-name">{route.merchantName ?? "Satıcı"}</div>
+          <div className="merchant-name">{display.merchantName ?? "Satıcı"}</div>
           <div className="mono muted" title={plan.merchant}>
             {short(plan.merchant)}
           </div>
         </div>
       </div>
 
-      <h1 className="plan-name">{route.planName ?? `Plan #${plan.id.toString()}`}</h1>
+      <h1 className="plan-name">{display.planName ?? `Plan #${plan.id.toString()}`}</h1>
+      {display.description && <p className="plan-description">{display.description}</p>}
       <div className="price">
         <span className="amount">{amount(plan.price)}</span>
         <span className="unit">
