@@ -11,7 +11,7 @@ import {
 } from "wagmi";
 import { signMessage } from "wagmi/actions";
 import { fetchNonce, type Team, useSession } from "./api.js";
-import { chain, isMainnet, networkName, otherNetworkUrl } from "./config.js";
+import { chain, checkoutUrl, isMainnet, networkName, otherNetworkUrl } from "./config.js";
 import { short } from "./format.js";
 import { Features } from "./pages/Features.js";
 import { Links } from "./pages/Links.js";
@@ -38,7 +38,9 @@ function Shell() {
     <>
       <header className="nav">
         <div className="wrap nav-row">
-          <span className="brand">Mona Visa</span>
+          <a className="brand" href={checkoutUrl}>
+            Mona Visa
+          </a>
           <nav className="tabs" aria-label="Panel">
             {PAGES.map((p) => (
               <NavLink key={p.page} to={p.path} current={page === p.page}>
@@ -161,7 +163,9 @@ function SignIn() {
     <>
       <header className="nav">
         <div className="wrap nav-row">
-          <span className="brand">Mona Visa</span>
+          <a className="brand" href={checkoutUrl}>
+            Mona Visa
+          </a>
           <span className="nav-meta">Satıcı paneli</span>
         </div>
       </header>

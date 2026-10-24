@@ -126,7 +126,9 @@ export function App() {
     <>
       <header className="nav">
         <div className="wrap nav-row">
-          <span className="brand">Mona Visa</span>
+          <a className="brand" href="/">
+            Mona Visa
+          </a>
           <span className="nav-meta">Güvenli abonelik ödemesi</span>
         </div>
       </header>
