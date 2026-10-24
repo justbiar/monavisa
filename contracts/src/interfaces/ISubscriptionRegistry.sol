@@ -12,11 +12,15 @@ interface ISubscriptionRegistry {
     }
 
     /// @dev One storage slot. The subscriber is the owner of the (soulbound) token.
+    ///      `pendingPlanId` is a downgrade that takes effect at the next renewal (0 = none).
+    ///      `inTrial` is true until the first paid period, so a trial earns no proration credit.
     struct Subscription {
         uint64 planId;
+        uint64 pendingPlanId;
         uint40 currentPeriodStart;
         uint40 currentPeriodEnd;
         Status status;
+        bool inTrial;
     }
 
     event SubscriptionActivated(
@@ -28,6 +32,14 @@ interface ISubscriptionRegistry {
     );
     event SubscriptionRenewed(uint256 indexed subId, uint40 periodStart, uint40 periodEnd);
     event SubscriptionPastDue(uint256 indexed subId);
+    event SubscriptionPlanChanged(
+        uint256 indexed subId,
+        uint256 indexed fromPlanId,
+        uint256 indexed toPlanId,
+        uint40 periodStart,
+        uint40 periodEnd
+    );
+    event SubscriptionPlanChangeScheduled(uint256 indexed subId, uint256 indexed toPlanId);
     event SubscriptionCanceled(uint256 indexed subId);
     event SubscriptionExpired(uint256 indexed subId);
 
@@ -38,11 +50,20 @@ interface ISubscriptionRegistry {
     error InvalidStatus(uint256 subId, Status status);
     error NotExpirable(uint256 subId);
 
-    function activate(address subscriber, uint256 planId, uint40 periodStart, uint40 periodEnd)
-        external
-        returns (uint256 subId);
+    function activate(
+        address subscriber,
+        uint256 planId,
+        uint40 periodStart,
+        uint40 periodEnd,
+        bool inTrial
+    ) external returns (uint256 subId);
 
     function renew(uint256 subId, uint40 periodStart, uint40 periodEnd) external;
+
+    function switchPlan(uint256 subId, uint256 toPlanId, uint40 periodStart, uint40 periodEnd)
+        external;
+
+    function schedulePlanChange(uint256 subId, uint256 toPlanId) external;
 
     function markPastDue(uint256 subId) external;
 
@@ -57,4 +78,6 @@ interface ISubscriptionRegistry {
     function isEntitled(address subscriber, uint256 planId) external view returns (bool);
 
     function isExpirable(uint256 subId) external view returns (bool);
+
+    function canSwitch(address subscriber, uint256 toPlanId) external view returns (bool);
 }

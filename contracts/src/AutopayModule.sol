@@ -51,8 +51,13 @@ contract AutopayModule is
         uint256 fee
     );
     event RenewalFailed(uint256 indexed subId, bytes reason);
+    event PlanUpgraded(
+        uint256 indexed subId, uint256 indexed fromPlanId, uint256 indexed toPlanId, uint256 credit
+    );
 
     error PlanInactive(uint256 planId);
+    error NotSubscriber(uint256 subId, address caller);
+    error InvalidPlanChange(uint256 subId, uint256 toPlanId);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -109,6 +114,44 @@ contract AutopayModule is
         return _renew(subId);
     }
 
+    // ------------------------------------------------------------------ plan changes
+
+    /// @notice Moves the caller's subscription to `toPlanId` from the same merchant and token.
+    ///         A more expensive plan (per second) starts now: the unused part of the current paid
+    ///         period is credited and only the difference is charged. A cheaper or equal plan is
+    ///         scheduled for the next renewal, so nothing ever needs refunding.
+    function changePlan(uint256 subId, uint256 toPlanId) external nonReentrant {
+        ISubscriptionRegistry.Subscription memory sub = _ownedActive(subId);
+        IPlanFactory.Plan memory from = planFactory.getPlan(sub.planId);
+        IPlanFactory.Plan memory to = planFactory.getPlan(toPlanId);
+        if (
+            toPlanId == sub.planId || !to.active || to.merchant != from.merchant
+                || to.token != from.token || !registry.canSwitch(msg.sender, toPlanId)
+        ) revert InvalidPlanChange(subId, toPlanId);
+
+        if (uint256(to.price) * from.period <= uint256(from.price) * to.period) {
+            registry.schedulePlanChange(subId, toPlanId);
+            return;
+        }
+
+        uint256 credit = sub.inTrial ? 0 : _unusedCredit(sub, from);
+        uint256 due = to.price > credit ? to.price - credit : 0;
+        if (due > 0) {
+            uint256 fee = feeCollector.computeFee(due, feeCollector.subscriptionFeeBps());
+            permit2.transferFrom(msg.sender, address(this), (due + fee).toUint160(), to.token);
+            _distribute(subId, msg.sender, to, due, fee);
+        }
+        uint40 start = uint40(block.timestamp);
+        registry.switchPlan(subId, toPlanId, start, start + to.period);
+        emit PlanUpgraded(subId, sub.planId, toPlanId, credit);
+    }
+
+    /// @notice Drops a scheduled downgrade.
+    function cancelPlanChange(uint256 subId) external nonReentrant {
+        _ownedActive(subId);
+        registry.schedulePlanChange(subId, 0);
+    }
+
     /// @notice Total a renewal of `planId` will pull: price plus protocol fee.
     function chargeAmount(uint256 planId) external view returns (uint256 total) {
         uint256 price = planFactory.getPlan(planId).price;
@@ -123,10 +166,10 @@ contract AutopayModule is
 
         uint40 start = uint40(block.timestamp);
         if (plan.trialPeriod > 0) {
-            return registry.activate(subscriber, planId, start, start + plan.trialPeriod);
+            return registry.activate(subscriber, planId, start, start + plan.trialPeriod, true);
         }
 
-        subId = registry.activate(subscriber, planId, start, start + plan.period);
+        subId = registry.activate(subscriber, planId, start, start + plan.period, false);
         _charge(subId, subscriber, plan);
     }
 
@@ -153,18 +196,52 @@ contract AutopayModule is
         }
 
         address subscriber = registry.subscriberOf(subId);
+        uint256 nextPlanId = sub.planId;
+        if (sub.pendingPlanId != 0 && registry.canSwitch(subscriber, sub.pendingPlanId)) {
+            nextPlanId = sub.pendingPlanId;
+            plan = planFactory.getPlan(nextPlanId);
+        }
+
         (uint256 price, uint256 fee) = _amounts(plan);
         try permit2.transferFrom(subscriber, address(this), (price + fee).toUint160(), plan.token) {
             _distribute(subId, subscriber, plan, price, fee);
             // Periods chain from the previous end, so late payment inside grace does not shift billing dates.
             uint40 nextStart = sub.currentPeriodEnd;
-            registry.renew(subId, nextStart, nextStart + plan.period);
+            if (nextPlanId == sub.planId) {
+                registry.renew(subId, nextStart, nextStart + plan.period);
+            } else {
+                registry.switchPlan(subId, nextPlanId, nextStart, nextStart + plan.period);
+            }
             return RenewalResult.Renewed;
         } catch (bytes memory reason) {
             if (status == ISubscriptionRegistry.Status.Active) registry.markPastDue(subId);
             emit RenewalFailed(subId, reason);
             return RenewalResult.PastDue;
         }
+    }
+
+    function _ownedActive(uint256 subId)
+        private
+        view
+        returns (ISubscriptionRegistry.Subscription memory sub)
+    {
+        sub = registry.getSubscription(subId);
+        if (registry.subscriberOf(subId) != msg.sender) revert NotSubscriber(subId, msg.sender);
+        if (sub.status != ISubscriptionRegistry.Status.Active) {
+            revert ISubscriptionRegistry.InvalidStatus(subId, sub.status);
+        }
+    }
+
+    /// @dev Value of the paid time left in the current period, at the current plan's rate.
+    function _unusedCredit(
+        ISubscriptionRegistry.Subscription memory sub,
+        IPlanFactory.Plan memory plan
+    ) private view returns (uint256) {
+        if (block.timestamp >= sub.currentPeriodEnd) return 0;
+        uint256 remaining = uint256(sub.currentPeriodEnd) - block.timestamp;
+        uint256 length = uint256(sub.currentPeriodEnd) - sub.currentPeriodStart;
+        if (remaining > length) remaining = length;
+        return uint256(plan.price) * remaining / length;
     }
 
     function _charge(uint256 subId, address subscriber, IPlanFactory.Plan memory plan) private {

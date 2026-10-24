@@ -46,11 +46,13 @@ contract SubscriptionRegistry is
 
     // ------------------------------------------------------------------ module
 
-    function activate(address subscriber, uint256 planId, uint40 periodStart, uint40 periodEnd)
-        external
-        onlyRole(MODULE_ROLE)
-        returns (uint256 subId)
-    {
+    function activate(
+        address subscriber,
+        uint256 planId,
+        uint40 periodStart,
+        uint40 periodEnd,
+        bool inTrial
+    ) external onlyRole(MODULE_ROLE) returns (uint256 subId) {
         uint256 existing = _current[subscriber][planId];
         if (existing != 0) {
             if (!_settleIfOver(existing)) revert AlreadySubscribed(subscriber, planId, existing);
@@ -59,9 +61,11 @@ contract SubscriptionRegistry is
         subId = ++subscriptionCount;
         _subs[subId] = Subscription({
             planId: SafeCast.toUint64(planId),
+            pendingPlanId: 0,
             currentPeriodStart: periodStart,
             currentPeriodEnd: periodEnd,
-            status: Status.Active
+            status: Status.Active,
+            inTrial: inTrial
         });
         _current[subscriber][planId] = subId;
         _mint(subscriber, subId);
@@ -80,7 +84,44 @@ contract SubscriptionRegistry is
         sub.currentPeriodStart = periodStart;
         sub.currentPeriodEnd = periodEnd;
         sub.status = Status.Active;
+        sub.inTrial = false;
         emit SubscriptionRenewed(subId, periodStart, periodEnd);
+    }
+
+    /// @notice Moves a subscription to another plan and starts a new paid period on it.
+    function switchPlan(uint256 subId, uint256 toPlanId, uint40 periodStart, uint40 periodEnd)
+        external
+        onlyRole(MODULE_ROLE)
+    {
+        Subscription storage sub = _get(subId);
+        if (sub.status != Status.Active && sub.status != Status.PastDue) {
+            revert InvalidStatus(subId, sub.status);
+        }
+        address subscriber = _ownerOf(subId);
+        uint256 existing = _current[subscriber][toPlanId];
+        if (existing != 0 && !_settleIfOver(existing)) {
+            revert AlreadySubscribed(subscriber, toPlanId, existing);
+        }
+
+        uint256 fromPlanId = sub.planId;
+        delete _current[subscriber][fromPlanId];
+        _current[subscriber][toPlanId] = subId;
+
+        sub.planId = SafeCast.toUint64(toPlanId);
+        sub.pendingPlanId = 0;
+        sub.currentPeriodStart = periodStart;
+        sub.currentPeriodEnd = periodEnd;
+        sub.status = Status.Active;
+        sub.inTrial = false;
+        emit SubscriptionPlanChanged(subId, fromPlanId, toPlanId, periodStart, periodEnd);
+    }
+
+    /// @notice Records a plan change for the next renewal. `toPlanId` 0 clears it.
+    function schedulePlanChange(uint256 subId, uint256 toPlanId) external onlyRole(MODULE_ROLE) {
+        Subscription storage sub = _get(subId);
+        if (sub.status != Status.Active) revert InvalidStatus(subId, sub.status);
+        sub.pendingPlanId = SafeCast.toUint64(toPlanId);
+        emit SubscriptionPlanChangeScheduled(subId, toPlanId);
     }
 
     function markPastDue(uint256 subId) external onlyRole(MODULE_ROLE) {
@@ -134,6 +175,12 @@ contract SubscriptionRegistry is
     function isExpirable(uint256 subId) public view returns (bool) {
         Subscription storage sub = _subs[subId];
         return sub.status != Status.None && sub.status != Status.Expired && !_hasAccess(sub);
+    }
+
+    /// @notice Whether `subscriber` could move onto `toPlanId` without clashing with a live subscription.
+    function canSwitch(address subscriber, uint256 toPlanId) external view returns (bool) {
+        uint256 existing = _current[subscriber][toPlanId];
+        return existing == 0 || _subs[existing].status == Status.Expired || isExpirable(existing);
     }
 
     function supportsInterface(bytes4 interfaceId)
