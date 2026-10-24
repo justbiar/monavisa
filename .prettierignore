@@ -5,3 +5,4 @@ pnpm-lock.yaml
 contracts/lib
 contracts/out
 contracts/cache
+packages/core/src/abis.ts

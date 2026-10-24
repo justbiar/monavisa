@@ -39,4 +39,5 @@ jobs:
           version: v1.5.1
       - run: forge fmt --check
       - run: forge build --sizes
+      - run: node ../packages/core/scripts/gen-abis.mjs --check
       - run: forge test -vvv

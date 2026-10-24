@@ -13,7 +13,8 @@
     "lint": "prettier --check .",
     "format": "prettier --write .",
     "contracts:build": "forge build --root contracts",
-    "contracts:test": "forge test --root contracts"
+    "contracts:test": "forge test --root contracts",
+    "abis": "forge build --root contracts && node packages/core/scripts/gen-abis.mjs"
   },
   "devDependencies": {
     "@types/node": "26.6.5",
