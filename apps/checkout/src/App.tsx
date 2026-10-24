@@ -10,7 +10,14 @@ import {
   useSubscription,
 } from "@monavisa/react";
 import { type FormEvent, useEffect, useState } from "react";
-import { useConnect, useConnection, useConnectors, useDisconnect, useSwitchChain } from "wagmi";
+import {
+  useBlockNumber,
+  useConnect,
+  useConnection,
+  useConnectors,
+  useDisconnect,
+  useSwitchChain,
+} from "wagmi";
 import { chain, explorerTxUrl } from "./config.js";
 
 interface Route {
@@ -55,20 +62,43 @@ const periodTr = (seconds: number) => {
 export function App() {
   const [route] = useState(parseRoute);
   return (
-    <div className="page">
-      <header className="topbar">
-        <span className="brand">
-          Mona <b>Visa</b>
-        </span>
-        <span className="network">
-          <i aria-hidden="true" />
-          {chain.name}
-        </span>
+    <>
+      <header className="nav">
+        <div className="wrap nav-row">
+          <span className="brand">Mona Visa</span>
+          <span className="nav-meta">Güvenli abonelik ödemesi</span>
+        </div>
       </header>
-      {route.planId === null ? <Landing /> : <Checkout route={route} planId={route.planId} />}
-      <footer className="foot">
-        Ödeme doğrudan satıcının cüzdanına gider. Mona Visa paranı hiçbir zaman tutmaz.
-      </footer>
+      <LiveStrip />
+      <div className="wrap page">
+        {route.planId === null ? <Landing /> : <Checkout route={route} planId={route.planId} />}
+        <footer className="foot">
+          Ödeme doğrudan satıcının cüzdanına gider. Mona Visa paranı hiçbir zaman tutmaz.
+        </footer>
+      </div>
+    </>
+  );
+}
+
+/** Dark ticker band with live chain facts. The block number updates as blocks arrive. */
+function LiveStrip() {
+  const { data: block } = useBlockNumber({ chainId: chain.id, watch: true });
+  return (
+    <div className="strip" aria-label="Ağ durumu">
+      <div className="wrap strip-row">
+        <span>
+          <em>Ağ</em> {chain.name}
+        </span>
+        <span>
+          <em>Blok</em> <i className="live" aria-hidden="true" />
+          <span className="num">
+            {block === undefined ? "…" : `#${block.toLocaleString("tr-TR")}`}
+          </span>
+        </span>
+        <span>
+          <em>Saklama</em> Yok, doğrudan satıcıya
+        </span>
+      </div>
     </div>
   );
 }
