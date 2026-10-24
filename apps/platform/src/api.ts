@@ -1,5 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { SubscriptionStatus, isEntitled, webhookEventTypes } from "@monavisa/core";
+import {
+  type SubscriptionStatus,
+  isEntitled,
+  subscriptionStatusName,
+  webhookEventTypes,
+} from "@monavisa/core";
 import { Hono } from "hono";
 import { isAddress } from "viem";
 import { z } from "zod";
@@ -32,7 +37,7 @@ function toSubscription(row: SubscriptionRow, nowSec: number) {
     customer: row.subscriber,
     planId: row.plan_id,
     pendingPlanId: row.pending_plan_id,
-    status: Object.keys(SubscriptionStatus)[status]?.toLowerCase() ?? "unknown",
+    status: subscriptionStatusName(status),
     currentPeriodStart: Number(row.period_start),
     currentPeriodEnd: Number(row.period_end),
     inTrial: row.in_trial,

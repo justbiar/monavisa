@@ -27,16 +27,17 @@ ArcenPay'den bilinçli olarak çıkarılanlar:
 
 Monad EVM uyumlu, ama birkaç fark tasarımı doğrudan etkiliyor:
 
-| Monad gerçeği                                                | Tasarıma etkisi                                                                                                                            |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Gas, kullanılan miktar değil **gas limit** üzerinden kesilir | Keeper ve facilitator her işlem için `eth_estimateGas` sonrası küçük bir sabit pay ekler, büyük buffer kullanmaz. Yenilemeler batch'lenir. |
-| EIP-7702 ile delege edilmiş EOA 10 MON altına düşemez        | Varsayılan autopay yolu 7702'ye dayanmaz. 7702 yalnızca opsiyonel.                                                                         |
-| Storage slotları 128'lik sayfalar halinde ısınır             | `Subscription` ve `Session` struct'ları sıkı paketlenir, ilgili alanlar ardışık slotlarda tutulur.                                         |
-| Kontrat boyutu 128 KB                                        | `SessionVault` tek kontratta sessions + escrow + revocation taşıyabilir, proxy bölme zorunlu değil.                                        |
-| Global mempool yok                                           | Frontrun yüzeyi farklı. Yine de escrow ve settle fonksiyonları imzaya ve nonce'a bağlı tutulur.                                            |
-| Full node'lar eski state sunmaz                              | Geçmiş veriler için kendi indexer'ımız (Ponder) zorunlu. Dashboard RPC'den tarihsel okuma yapmaz.                                          |
-| P256 precompile `0x0100` adresinde                           | Passkey imzalı mandate'ler ileride ucuza doğrulanabilir (faz 6).                                                                           |
-| Hosted x402 facilitator'larda Monad desteği doğrulanamadı    | **Kendi facilitator'ımızı** yazıyoruz (`/verify`, `/settle`, `/supported`).                                                                |
+| Monad gerçeği                                                                                                                 | Tasarıma etkisi                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Gas, kullanılan miktar değil **gas limit** üzerinden kesilir                                                                  | Keeper ve facilitator her işlem için `eth_estimateGas` sonrası küçük bir sabit pay ekler, büyük buffer kullanmaz. Yenilemeler batch'lenir.             |
+| EIP-7702 ile delege edilmiş EOA 10 MON altına düşemez                                                                         | Varsayılan autopay yolu 7702'ye dayanmaz. 7702 yalnızca opsiyonel.                                                                                     |
+| Storage slotları 128'lik sayfalar halinde ısınır                                                                              | `Subscription` ve `Session` struct'ları sıkı paketlenir, ilgili alanlar ardışık slotlarda tutulur.                                                     |
+| Kontrat boyutu 128 KB                                                                                                         | `SessionVault` tek kontratta sessions + escrow + revocation taşıyabilir, proxy bölme zorunlu değil.                                                    |
+| Global mempool yok                                                                                                            | Frontrun yüzeyi farklı. Yine de escrow ve settle fonksiyonları imzaya ve nonce'a bağlı tutulur.                                                        |
+| Full node'lar eski state sunmaz                                                                                               | Geçmiş veriler için kendi indexer'ımız (Ponder) zorunlu. Dashboard RPC'den tarihsel okuma yapmaz.                                                      |
+| Herkesçe bilinen ya da paylaşılmış anahtarlı EOA'larda EIP-7702 delegasyonu olabiliyor (anvil test hesaplarının hepsinde var) | Permit2 kodu olan hesapların imzasını ERC-1271 ile doğruluyor. Checkout, kodu olan hesaplarda imza yerine zincir üstünde `Permit2.approve` kullanıyor. |
+| P256 precompile `0x0100` adresinde                                                                                            | Passkey imzalı mandate'ler ileride ucuza doğrulanabilir (faz 6).                                                                                       |
+| Hosted x402 facilitator'larda Monad desteği doğrulanamadı                                                                     | **Kendi facilitator'ımızı** yazıyoruz (`/verify`, `/settle`, `/supported`).                                                                            |
 
 ### Ağ bilgileri
 
@@ -155,7 +156,9 @@ Adresler, ABI'ler, chain config (143 ve 10143), tipler, EIP-712 domain'leri. Di�
 
 ### `@monavisa/react`
 
-- wagmi v2 ve viem üzerine.
+> **Faz 3 durumu (2026-10-24):** `MonaVisaProvider`, `usePlan`, `useSubscription`, `useEntitlement(planIds)`, `useCheckout`, `useManageSubscription` hazır. Hazır UI bileşenleri yerine hook'lar öne çıktı, hosted checkout bunlarla kurulu. `useEntitlement` istemci tarafında zincirden okuyor, ücretli işlemler için sunucuda `@monavisa/node` ile tekrar kontrol edilmeli.
+
+- wagmi v3 ve viem üzerine (planlandığında v2 idi, güncel ana sürüm v3).
 - Bileşenler: `<PricingTable>`, `<Checkout>`, `<SubscriptionStatus>`, `<ManageSubscription>`, `<MonaVisaEmbed>` (iframe'siz, dashboard'dan gelen tasarım token'ları ile).
 - Hook'lar: `useEntitlement(feature)`, `useSubscription()`, `useCheckout()`.
 
@@ -202,7 +205,7 @@ Mandate {
 ## 7. Uygulamalar
 
 - `apps/dashboard` (Next.js): plan ve feature yönetimi, abone listesi, gelir grafikleri, webhook ayarları, API key'ler, checkout tasarım editörü.
-- `apps/checkout` (Next.js): hosted checkout ve payment link sayfaları, `pay.monavisa.xyz/<id>` gibi.
+- `apps/checkout` (Vite + React, hazır): `/plan/<id>` hosted checkout. Cüzdan bağla, Permit2 tavanlı yetki ver, abone ol, durumu gör, iptal et. Plan adı ve satıcı etiketi bağlantıdan (`?name=&merchant=`) gelir, tutarlar ve satıcı adresi her zaman zincirden. Payment link kayıtları dashboard ile birlikte gelecek.
 - `apps/docs`: geliştirici dokümanı.
 - `examples/`: SaaS gating örneği, x402 korumalı API, MCP ile ödeme yapan agent.
 
@@ -216,7 +219,7 @@ MonaVisa/
   packages/
     core/  react/  node/  agent/  mcp/
   apps/
-    platform/  dashboard/  checkout/  docs/
+    platform/  checkout/  dashboard/  docs/
   examples/
   docs/
 ```

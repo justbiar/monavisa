@@ -5,3 +5,4 @@ export * from "./fees.js";
 export * from "./entitlement.js";
 export * from "./abis.js";
 export * from "./webhooks.js";
+export * from "./permit2.js";

@@ -1,4 +1,5 @@
 export {
+  type SubscriptionStatusName,
   verifyWebhook,
   WebhookVerificationError,
   WEBHOOK_ID_HEADER,
@@ -6,6 +7,8 @@ export {
   type WebhookEvent,
   type WebhookEventType,
 } from "@monavisa/core";
+
+import type { SubscriptionStatusName } from "@monavisa/core";
 
 export const DEFAULT_BASE_URL = "http://localhost:8787";
 
@@ -20,8 +23,6 @@ export interface MonaVisaClientOptions {
 export interface Customer {
   address: `0x${string}`;
 }
-
-export type SubscriptionStatusName = "none" | "active" | "pastdue" | "canceled" | "expired";
 
 export interface Subscription {
   id: string;

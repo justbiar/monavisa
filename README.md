@@ -8,7 +8,10 @@ Non-custodial subscriptions, entitlements and agent payments on Monad. See [docs
 contracts/        Foundry project (Solidity 0.8.30, evm_version prague)
 packages/core/    @monavisa/core: chains, addresses, ABIs, EIP-3009 typed data, fees, entitlement, webhook signing
 packages/node/    @monavisa/node: server SDK (entitlement checks, customers, features, webhook verification)
+packages/react/   @monavisa/react: wagmi v3 hooks (usePlan, useSubscription, useEntitlement, useCheckout, useManageSubscription)
 apps/platform/    Indexer, renewal keeper, webhook dispatcher and HTTP API
+apps/checkout/    Hosted checkout at /plan/<id> (Vite + React)
+scripts/          Local devnet seeding
 pitch/            90 second pitch page
 ```
 
@@ -62,8 +65,10 @@ const { enabled } = await monavisa.checkEntitlement("pro_dashboard", { address: 
 
 ```bash
 anvil --fork-url https://testnet-rpc.monad.xyz --code-size-limit 131072
-cd contracts && forge script script/DeployLocal.s.sol --rpc-url http://127.0.0.1:8545 \
-  --broadcast --unlocked --sender <first anvil account> --code-size-limit 131072
+scripts/local-devnet.sh                     # deploy, create 2 plans, fund 2 subscribers, write apps/checkout/.env.local
+pnpm --filter @monavisa/checkout dev         # http://localhost:5173/plan/1?name=Pro&merchant=Demo
 ```
 
-Addresses are written to `contracts/deployments/local.json`. The code size flag matches Monad's 128 KB limit.
+The checkout shows a "Dev cüzdanı (anvil)" option that signs with an unlocked anvil account, so no keys or browser wallet are needed. The code size flag matches Monad's 128 KB limit.
+
+anvil's default keys are public, and on Monad testnet those addresses carry EIP-7702 delegations set by strangers. The seed script clears them on the fork for accounts 0 to 2. Account 3 keeps its delegation so the checkout path for accounts with code (on-chain Permit2 approval instead of a signature) can be tested by pointing `VITE_DEV_ACCOUNT` at it.

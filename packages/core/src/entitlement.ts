@@ -35,3 +35,18 @@ export function isEntitled(sub: SubscriptionPeriod, now: bigint): boolean {
       return false;
   }
 }
+
+export type SubscriptionStatusName = "none" | "active" | "past_due" | "canceled" | "expired";
+
+const STATUS_NAMES: Record<SubscriptionStatus, SubscriptionStatusName> = {
+  [SubscriptionStatus.None]: "none",
+  [SubscriptionStatus.Active]: "active",
+  [SubscriptionStatus.PastDue]: "past_due",
+  [SubscriptionStatus.Canceled]: "canceled",
+  [SubscriptionStatus.Expired]: "expired",
+};
+
+/** API-facing name for an on-chain status value. Unknown values map to "none". */
+export function subscriptionStatusName(status: number): SubscriptionStatusName {
+  return STATUS_NAMES[status as SubscriptionStatus] ?? "none";
+}
