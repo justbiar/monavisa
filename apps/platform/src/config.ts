@@ -25,9 +25,20 @@ const schema = z.object({
   KEEPER_RETRY_AFTER_SEC: z.coerce.number().int().positive().default(3600),
   POLL_MS: z.coerce.number().int().positive().default(1000),
   PORT: z.coerce.number().int().positive().default(8787),
+  /** Comma-separated browser origins allowed to call the API. */
+  CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:5174"),
+  /** Comma-separated hosts accepted in dashboard sign-in messages. */
+  SIWE_DOMAINS: z.string().default("localhost:5174"),
+  CHECKOUT_URL: z.url().default("http://localhost:5173"),
 });
 
 export type Config = ReturnType<typeof loadConfig>;
+
+const list = (value: string) =>
+  value
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
   const parsed = schema.safeParse(env);
@@ -67,5 +78,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     keeperRetryAfterSec: c.KEEPER_RETRY_AFTER_SEC,
     pollMs: c.POLL_MS,
     port: c.PORT,
+    corsOrigins: list(c.CORS_ORIGINS),
+    siweDomains: list(c.SIWE_DOMAINS),
+    checkoutUrl: c.CHECKOUT_URL,
   };
 }

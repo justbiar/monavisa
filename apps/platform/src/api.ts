@@ -1,72 +1,67 @@
 import { randomBytes } from "node:crypto";
-import {
-  type SubscriptionStatus,
-  isEntitled,
-  subscriptionStatusName,
-  webhookEventTypes,
-} from "@monavisa/core";
+import { webhookEventTypes } from "@monavisa/core";
 import { Hono } from "hono";
-import { isAddress } from "viem";
+import { cors } from "hono/cors";
+import { type Hex, isAddress, isHex } from "viem";
 import { z } from "zod";
+import {
+  SESSION_PREFIX,
+  type SiweVerifier,
+  issueNonce,
+  login,
+  logout,
+  teamForSession,
+} from "./auth.js";
+import type { AppEnv, PlanMerchantReader } from "./context.js";
+import { dashboardRoutes } from "./dashboard.js";
 import type { Db } from "./db.js";
 import { lastIndexedBlock } from "./indexer.js";
-import { type Team, teamForApiKey } from "./teams.js";
+import { publicRoutes } from "./public.js";
+import { SUBSCRIPTION_SELECT, type SubscriptionRow, toSubscription } from "./subscriptions.js";
+import { teamForApiKey } from "./teams.js";
 
 export interface ApiOptions {
   chainId: number;
   /** Current time in unix seconds; injectable for tests. */
   now?: () => number;
+  /** Verifies dashboard sign-in signatures. Without it, /auth/login is disabled. */
+  verifySiwe?: SiweVerifier;
+  /** Hosts allowed in sign-in messages, e.g. ["localhost:5174"]. */
+  siweDomains?: readonly string[];
+  /** Browser origins allowed to call the API (dashboard, checkout). */
+  corsOrigins?: readonly string[];
+  readPlanMerchant?: PlanMerchantReader;
+  checkoutBaseUrl?: string;
 }
-
-interface SubscriptionRow {
-  sub_id: string;
-  subscriber: string;
-  plan_id: string;
-  pending_plan_id: string | null;
-  period_start: string;
-  period_end: string;
-  status: number;
-  in_trial: boolean;
-  grace_period: number;
-}
-
-function toSubscription(row: SubscriptionRow, nowSec: number) {
-  const status = row.status as SubscriptionStatus;
-  return {
-    id: row.sub_id,
-    customer: row.subscriber,
-    planId: row.plan_id,
-    pendingPlanId: row.pending_plan_id,
-    status: subscriptionStatusName(status),
-    currentPeriodStart: Number(row.period_start),
-    currentPeriodEnd: Number(row.period_end),
-    inTrial: row.in_trial,
-    entitled: isEntitled(
-      {
-        status,
-        currentPeriodStart: BigInt(row.period_start),
-        currentPeriodEnd: BigInt(row.period_end),
-        gracePeriod: BigInt(row.grace_period),
-      },
-      BigInt(nowSec),
-    ),
-  };
-}
-
-const SUBSCRIPTION_SELECT = `
-  select s.sub_id, s.subscriber, s.plan_id, s.pending_plan_id, s.period_start, s.period_end,
-         s.status, s.in_trial, p.grace_period
-  from subscriptions s join plans p on p.plan_id = s.plan_id`;
 
 const featureBody = z.object({ planIds: z.array(z.string().regex(/^\d+$/)).min(1) });
 const endpointBody = z.object({
   url: z.url({ protocol: /^https?$/ }),
   events: z.array(z.enum([...webhookEventTypes, "*"])).min(1),
 });
+const loginBody = z.object({
+  message: z.string().min(1).max(4000),
+  signature: z.string().refine((s) => isHex(s), "must be hex"),
+});
+
+const bearer = (header: string | undefined) =>
+  header?.startsWith("Bearer ") ? header.slice(7) : null;
 
 export function createApi(db: Db, options: ApiOptions) {
   const now = options.now ?? (() => Math.floor(Date.now() / 1000));
-  const app = new Hono<{ Variables: { team: Team } }>();
+  const app = new Hono<AppEnv>();
+
+  if (options.corsOrigins?.length) {
+    app.use(
+      "*",
+      cors({
+        origin: [...options.corsOrigins],
+        allowHeaders: ["authorization", "content-type"],
+        allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        maxAge: 600,
+      }),
+    );
+  }
 
   app.get("/health", async (c) => {
     const block = await lastIndexedBlock(db);
@@ -77,12 +72,56 @@ export function createApi(db: Db, options: ApiOptions) {
     });
   });
 
+  app.route("/public", publicRoutes(db));
+
+  // ---------------------------------------------------------------- dashboard sign-in (SIWE)
+
+  app.post("/auth/nonce", async (c) => c.json({ nonce: await issueNonce(db, now()) }));
+
+  app.post("/auth/login", async (c) => {
+    if (!options.verifySiwe || !options.siweDomains?.length) {
+      return c.json({ error: "Dashboard sign-in is not configured" }, 503);
+    }
+    const parsed = loginBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Body must be { message, signature }" }, 400);
+    const result = await login(
+      db,
+      { message: parsed.data.message, signature: parsed.data.signature as Hex },
+      {
+        verify: options.verifySiwe,
+        domains: options.siweDomains,
+        chainId: options.chainId,
+        now: now(),
+      },
+    );
+    if (!result.ok) return c.json({ error: result.error }, 401);
+    return c.json({ token: result.token, team: result.team, expiresAt: result.expiresAt });
+  });
+
+  app.post("/auth/logout", async (c) => {
+    const token = bearer(c.req.header("authorization"));
+    if (token?.startsWith(SESSION_PREFIX)) await logout(db, token);
+    return c.body(null, 204);
+  });
+
+  // ---------------------------------------------------------------- authenticated API
+
+  /** A dashboard session token (mv_sess_...) or a secret API key (mv_sk_...). */
   app.use("/v1/*", async (c, next) => {
-    const auth = c.req.header("authorization");
-    const key = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-    const team = key ? await teamForApiKey(db, key) : null;
-    if (!team) return c.json({ error: "Invalid or missing API key" }, 401);
+    const token = bearer(c.req.header("authorization"));
+    if (!token) return c.json({ error: "Invalid or missing API key" }, 401);
+    const isSession = token.startsWith(SESSION_PREFIX);
+    const team = isSession
+      ? await teamForSession(db, token, now())
+      : await teamForApiKey(db, token);
+    if (!team) {
+      return c.json(
+        { error: isSession ? "Session expired. Sign in again." : "Invalid or missing API key" },
+        401,
+      );
+    }
     c.set("team", team);
+    c.set("authKind", isSession ? "session" : "key");
     await next();
   });
 
@@ -152,10 +191,10 @@ export function createApi(db: Db, options: ApiOptions) {
     return c.json({
       data: rows.map((r) => ({
         id: r.id,
-        subscriptionId: r.sub_id,
+        subscriptionId: String(r.sub_id),
         token: r.token,
-        amount: r.amount,
-        fee: r.fee,
+        amount: String(r.amount),
+        fee: String(r.fee),
         transactionHash: r.tx_hash,
         paidAt: Number(r.paid_at),
       })),
@@ -197,7 +236,7 @@ export function createApi(db: Db, options: ApiOptions) {
 
   app.get("/v1/webhook-endpoints", async (c) => {
     const rows = await db.query<{ id: string; url: string; events: string[]; active: boolean }>(
-      "select id, url, events, active from webhook_endpoints where team_id = $1 order by created_at",
+      "select id, url, events, active from webhook_endpoints where team_id = $1 and active order by created_at",
       [c.get("team").id],
     );
     return c.json({ data: rows });
@@ -217,6 +256,15 @@ export function createApi(db: Db, options: ApiOptions) {
     );
     return c.json({ id, url: parsed.data.url, events: parsed.data.events, secret }, 201);
   });
+
+  app.route(
+    "/v1",
+    dashboardRoutes(db, {
+      now,
+      ...(options.readPlanMerchant ? { readPlanMerchant: options.readPlanMerchant } : {}),
+      ...(options.checkoutBaseUrl ? { checkoutBaseUrl: options.checkoutBaseUrl } : {}),
+    }),
+  );
 
   return app;
 }

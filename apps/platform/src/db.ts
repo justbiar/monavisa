@@ -147,6 +147,53 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       create index webhook_deliveries_due_idx on webhook_deliveries (status, next_attempt_at);
     `,
   },
+  {
+    // Dashboard: several revocable API keys per team, SIWE sessions, plan names, payment links.
+    version: 2,
+    sql: `
+      create table api_keys (
+        id text primary key,
+        team_id text not null references teams (id),
+        label text not null default 'Default',
+        prefix text not null,
+        key_hash text not null unique,
+        created_at timestamptz not null default now(),
+        revoked_at timestamptz
+      );
+      insert into api_keys (id, team_id, prefix, key_hash)
+        select 'key_' || substr(md5(id), 1, 16), id, 'mv_sk_', api_key_hash from teams;
+      alter table teams drop column api_key_hash;
+
+      create table auth_nonces (
+        nonce text primary key,
+        expires_at bigint not null
+      );
+
+      create table sessions (
+        token_hash text primary key,
+        team_id text not null references teams (id),
+        address text not null,
+        expires_at bigint not null
+      );
+
+      create table plan_metadata (
+        plan_id bigint primary key,
+        name text not null,
+        description text,
+        updated_at timestamptz not null default now()
+      );
+
+      create table payment_links (
+        id text primary key,
+        team_id text not null references teams (id),
+        plan_id bigint not null,
+        label text,
+        active boolean not null default true,
+        created_at timestamptz not null default now()
+      );
+      create index payment_links_team_idx on payment_links (team_id);
+    `,
+  },
 ];
 
 export async function migrate(db: Db): Promise<number> {

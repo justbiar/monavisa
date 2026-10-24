@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { serve } from "@hono/node-server";
-import { getChain } from "@monavisa/core";
+import { getChain, planFactoryAbi } from "@monavisa/core";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { createApi } from "./api.js";
@@ -86,7 +86,24 @@ function runWebhooks(db: Db, cfg: Config) {
 }
 
 function runApi(db: Db, cfg: Config) {
-  const app = createApi(db, { chainId: cfg.chainId });
+  const { publicClient } = clients(cfg);
+  const app = createApi(db, {
+    chainId: cfg.chainId,
+    corsOrigins: cfg.corsOrigins,
+    siweDomains: cfg.siweDomains,
+    checkoutBaseUrl: cfg.checkoutUrl,
+    // Covers EOAs, smart accounts and EIP-7702 delegated wallets.
+    verifySiwe: ({ message, signature }) => publicClient.verifySiweMessage({ message, signature }),
+    readPlanMerchant: async (planId) =>
+      (
+        await publicClient.readContract({
+          address: cfg.contracts.planFactory,
+          abi: planFactoryAbi,
+          functionName: "getPlan",
+          args: [planId],
+        })
+      ).merchant,
+  });
   serve({ fetch: app.fetch, port: cfg.port });
   console.log(`[api] listening on http://localhost:${cfg.port}`);
 }
