@@ -1,0 +1,3 @@
+# Everyone, AI crawlers and assistants included, may read the whole site.
+User-agent: *
+Allow: /

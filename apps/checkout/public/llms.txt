@@ -1,0 +1,47 @@
+# Mona Visa
+
+> Non-custodial subscription billing and agent payments on Monad. Merchants sell USDC subscriptions; subscribers approve once through Permit2 and renewals are charged automatically, straight to the merchant's wallet. AI agents pay APIs per request over HTTP 402 (x402) from prepaid sessions with spending mandates and escrow.
+
+## What it does
+
+- Merchants create a plan on-chain (price, period, trial, grace period), share a hosted checkout or payment link, and track subscribers, invoices and revenue in a dashboard. Their backend checks entitlements through an API key and receives signed webhooks.
+- Subscribers connect a wallet and subscribe with one approval. No card, no account. They can cancel at any time. Each period the contract can charge at most the plan price plus the 1% fee.
+- A permissionless keeper calls `renewMany` when periods end. Failed charges mark the subscription past due and are retried until the grace period ends.
+- AI agents open a prepaid session in `SessionVault`, sign cumulative vouchers per payee, and a facilitator verifies them off-chain; a settler redeems them on-chain in batches. Hierarchical mandates cap what an agent may spend, and escrows support verify-then-settle.
+
+## Why Monad
+
+Per-request agent payments of a few cents and batched renewals of many subscriptions only make sense with very low gas, and sub-second blocks let a subscriber see the payment confirm on the checkout page. The rules live in contracts, so Mona Visa never holds funds.
+
+## Fees
+
+1% protocol fee (100 bps). On subscriptions it is added on top of the price, so the merchant receives the full price. On agent payments it is taken from the payee's share. The admin can change the rates up to a 10% cap.
+
+## Live deployments
+
+Monad Mainnet (chain 143)
+- Dashboard: https://monavisa-dashboard-mainnet.selfbiar.workers.dev
+- Checkout: https://monavisa-checkout-mainnet.selfbiar.workers.dev
+- API: https://monavisa-api-mainnet.selfbiar.workers.dev/health
+- PlanFactory 0xB6545c301e655CE45f64A44B51434466597D8f49
+- SubscriptionRegistry 0x67ce32FC1CcC61d7CAC895A707DD2353C3ACE696
+- AutopayModule 0xf5a46AE08fDA674D0a26Af661575867f37a612b7
+- SessionVault 0x6A3455667bEF02F014bB54dF3A66987b9Bd77F2c
+- FeeCollector 0x438e9181b308E502CA72907a2D20b8389Cc2Dd3F
+
+Monad Testnet (chain 10143)
+- Dashboard: https://monavisa-dashboard.selfbiar.workers.dev
+- Checkout: https://monavisa-checkout.selfbiar.workers.dev (demo plan: /plan/1)
+- API: https://monavisa-api.selfbiar.workers.dev/health
+- PlanFactory 0xAB58722C88804461aeb3bf6ba19Db2A9591F0D07
+- SubscriptionRegistry 0x8e01FF28C628B975bd04e94C6F3441aC8B742D0a
+- AutopayModule 0x50F1dF3adF823676e1f7B6F0c1bD8da547d6291c
+- SessionVault 0x9B9EDD27487122E89E972968e2A8e89dC15CCe9d
+- FeeCollector 0x9fFeb1C740357e1B890C2f68B76FEc86DD0aBBfe
+
+The contracts have not been audited yet.
+
+## Source
+
+- Code and README: https://github.com/justbiar/monavisa
+- Stack: Solidity 0.8.30 (Foundry, UUPS proxies), TypeScript SDKs (@monavisa/core, node, react, agent, mcp), Hono API on Cloudflare Workers with D1, React + wagmi frontends.

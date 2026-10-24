@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Mona Visa Panel</title>
+    <title>Mona Visa · Satıcı paneli</title>
+    <meta
+      name="description"
+      content="Mona Visa satıcı paneli: Monad üzerinde USDC abonelik planları, aboneler, ödemeler, ödeme linkleri ve webhook'lar."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,7 +16,26 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Plain HTML for crawlers and AI tools that do not run JavaScript. React replaces it. -->
+      <main style="max-width: 860px; margin: 0 auto; padding: 48px 16px; font-family: system-ui, sans-serif; line-height: 1.55">
+        <h1>Mona Visa satıcı paneli</h1>
+        <p>
+          Mona Visa'da abonelik satan satıcıların paneli. Cüzdanla (Sign-In with Ethereum) giriş
+          yapılır. Panelden plan oluşturulur, aboneler, ödemeler ve gelir izlenir, ödeme linkleri,
+          API anahtarları, özellik eşlemeleri ve webhook'lar yönetilir.
+        </p>
+        <p lang="en">
+          Merchant dashboard for Mona Visa, non-custodial subscriptions and agent payments on Monad.
+          Merchants sign in with their wallet to create plans, track subscribers and revenue, and
+          manage payment links, API keys and webhooks.
+        </p>
+        <p>
+          Projenin tanıtımı: <a href="https://monavisa-checkout-mainnet.selfbiar.workers.dev">Mona Visa ana sayfası</a> ·
+          <a href="https://github.com/justbiar/monavisa">GitHub</a>
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

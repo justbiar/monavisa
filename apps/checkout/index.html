@@ -16,7 +16,61 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Plain HTML copy of the homepage for crawlers and AI tools that do not run JavaScript.
+           React replaces it on load; it is dropped right away on other routes. -->
+      <main id="static-home" style="max-width: 860px; margin: 0 auto; padding: 48px 16px; font-family: system-ui, sans-serif; line-height: 1.55">
+        <h1>Mona Visa: cüzdandan otomatik ödenen abonelikler</h1>
+        <p>
+          Mona Visa, Monad üzerinde non-custodial abonelik ve ajan ödemeleri altyapısıdır. Satıcılar
+          USDC ile abonelik satar. Abone bir kez onay verir, her dönem ödeme kendiliğinden çekilir ve
+          aracıya uğramadan satıcının cüzdanına gider. Aynı altyapıyla AI ajanları API'lere istek
+          başına ödeme yapar (x402).
+        </p>
+        <p lang="en">
+          In English: Mona Visa is non-custodial subscription billing and agent payments on Monad.
+          Merchants sell USDC subscriptions, subscribers approve once through Permit2 and renewals are
+          charged automatically by a permissionless keeper, straight to the merchant's wallet. AI
+          agents pay APIs per request over HTTP 402 (x402) from prepaid sessions with spending
+          mandates and escrow.
+        </p>
+        <h2>Kimin için?</h2>
+        <ul>
+          <li><strong>Satıcılar:</strong> plan oluşturur, ödeme linki paylaşır, aboneleri ve geliri panelden izler, API ve webhook'larla erişimi yönetir.</li>
+          <li><strong>Aboneler:</strong> cüzdanla tek onayla abone olur, kart ya da hesap gerekmez, istediği an iptal eder.</li>
+          <li><strong>AI ajanları:</strong> önceden yüklenmiş bir oturumdan, harcama limitleriyle API'lere istek başına öder.</li>
+        </ul>
+        <h2>Nasıl çalışır?</h2>
+        <ol>
+          <li>Satıcı planı zincire kaydeder: fiyat, dönem, deneme ve tolerans süresi. Fiyat sonradan değişmez.</li>
+          <li>Abone Permit2 ile ödeme modülüne miktarı ve süresi sınırlı bir USDC izni verir, ilk ödeme hemen yapılır.</li>
+          <li>Dönem bitince keeper yenilemeyi tetikler, para doğrudan satıcıya gider.</li>
+        </ol>
+        <h2>Neden Monad?</h2>
+        <p>
+          Kuruşluk ajan ödemeleri ve yüzlerce aboneliğin toplu yenilenmesi ancak düşük gas ile kârlı.
+          Saniyenin altındaki bloklar sayesinde abone ödemenin onayını checkout ekranında görür.
+          Kurallar kontratta, Mona Visa parayı tutmaz.
+        </p>
+        <h2>Ücret</h2>
+        <p>%1 protokol ücreti. Abonelikte fiyatın üstüne eklenir, satıcı fiyatın tamamını alır. Ajan ödemelerinde alıcının payından kesilir.</p>
+        <h2>Canlı kontratlar</h2>
+        <p>Monad Mainnet (chain 143): PlanFactory 0xB6545c301e655CE45f64A44B51434466597D8f49, SubscriptionRegistry 0x67ce32FC1CcC61d7CAC895A707DD2353C3ACE696, AutopayModule 0xf5a46AE08fDA674D0a26Af661575867f37a612b7, SessionVault 0x6A3455667bEF02F014bB54dF3A66987b9Bd77F2c, FeeCollector 0x438e9181b308E502CA72907a2D20b8389Cc2Dd3F.</p>
+        <p>Monad Testnet (chain 10143): PlanFactory 0xAB58722C88804461aeb3bf6ba19Db2A9591F0D07, SubscriptionRegistry 0x8e01FF28C628B975bd04e94C6F3441aC8B742D0a, AutopayModule 0x50F1dF3adF823676e1f7B6F0c1bD8da547d6291c, SessionVault 0x9B9EDD27487122E89E972968e2A8e89dC15CCe9d, FeeCollector 0x9fFeb1C740357e1B890C2f68B76FEc86DD0aBBfe.</p>
+        <p>Kontratlar henüz audit edilmedi.</p>
+        <h2>Bağlantılar</h2>
+        <ul>
+          <li>Satıcı paneli: <a href="https://monavisa-dashboard-mainnet.selfbiar.workers.dev">mainnet</a> · <a href="https://monavisa-dashboard.selfbiar.workers.dev">testnet</a></li>
+          <li>Checkout: <a href="https://monavisa-checkout-mainnet.selfbiar.workers.dev">mainnet</a> · <a href="https://monavisa-checkout.selfbiar.workers.dev">testnet</a> · <a href="https://monavisa-checkout.selfbiar.workers.dev/plan/1">örnek plan</a></li>
+          <li>API: <a href="https://monavisa-api-mainnet.selfbiar.workers.dev/health">mainnet</a> · <a href="https://monavisa-api.selfbiar.workers.dev/health">testnet</a></li>
+          <li>Kaynak kod: <a href="https://github.com/justbiar/monavisa">github.com/justbiar/monavisa</a></li>
+          <li>Makine için özet: <a href="/llms.txt">/llms.txt</a></li>
+        </ul>
+      </main>
+      <script>
+        if (location.pathname !== "/") document.getElementById("static-home").remove();
+      </script>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
