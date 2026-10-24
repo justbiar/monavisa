@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 /// @title MonadAddresses
-/// @notice Canonical third-party contracts on Monad that MonCart depends on.
+/// @notice Canonical third-party contracts on Monad that Mona Visa depends on.
 /// @dev Kept in sync with `packages/core/src/networks.ts` by a test in that package.
 ///      Every address was checked on-chain on 2026-10-24.
 library MonadAddresses {

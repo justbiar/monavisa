@@ -5,12 +5,12 @@ export {
   WEBHOOK_SIGNATURE_HEADER,
   type WebhookEvent,
   type WebhookEventType,
-} from "@moncart/core";
+} from "@monavisa/core";
 
 export const DEFAULT_BASE_URL = "http://localhost:8787";
 
-export interface MonCartClientOptions {
-  /** Secret API key (`mc_sk_...`). Keep it server-side. */
+export interface MonaVisaClientOptions {
+  /** Secret API key (`mv_sk_...`). Keep it server-side. */
   apiKey: string;
   baseUrl?: string;
   fetch?: typeof fetch;
@@ -66,23 +66,23 @@ export interface WebhookEndpoint {
   secret?: string;
 }
 
-export class MonCartError extends Error {
+export class MonaVisaError extends Error {
   readonly status: number;
 
   constructor(status: number, message: string) {
     super(message);
-    this.name = "MonCartError";
+    this.name = "MonaVisaError";
     this.status = status;
   }
 }
 
-export class MonCartClient {
+export class MonaVisaClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
 
-  constructor(options: MonCartClientOptions) {
-    if (!options.apiKey) throw new Error("MonCartClient needs an apiKey");
+  constructor(options: MonaVisaClientOptions) {
+    if (!options.apiKey) throw new Error("MonaVisaClient needs an apiKey");
     this.apiKey = options.apiKey;
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
     this.fetchImpl = options.fetch ?? fetch;
@@ -141,7 +141,7 @@ export class MonCartClient {
     if (!res.ok) {
       const message =
         json && typeof json === "object" && "error" in json ? String(json.error) : res.statusText;
-      throw new MonCartError(res.status, message);
+      throw new MonaVisaError(res.status, message);
     }
     return json as T;
   }

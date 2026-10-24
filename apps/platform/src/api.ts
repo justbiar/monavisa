@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { SubscriptionStatus, isEntitled, webhookEventTypes } from "@moncart/core";
+import { SubscriptionStatus, isEntitled, webhookEventTypes } from "@monavisa/core";
 import { Hono } from "hono";
 import { isAddress } from "viem";
 import { z } from "zod";

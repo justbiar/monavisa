@@ -3,9 +3,9 @@ pragma solidity ^0.8.28;
 
 import {AutopayModule} from "../src/AutopayModule.sol";
 import {ISubscriptionRegistry} from "../src/interfaces/ISubscriptionRegistry.sol";
-import {MonCartBase} from "./MonCartBase.t.sol";
+import {MonaVisaBase} from "./MonaVisaBase.t.sol";
 
-contract PlanChangeTest is MonCartBase {
+contract PlanChangeTest is MonaVisaBase {
     uint96 internal constant BASIC_PRICE = 10e6;
 
     uint256 internal basic;

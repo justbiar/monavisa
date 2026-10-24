@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-/// @notice The subset of Uniswap Permit2's AllowanceTransfer that MonCart uses.
+/// @notice The subset of Uniswap Permit2's AllowanceTransfer that Mona Visa uses.
 /// @dev Permit2 is deployed at the canonical address on both Monad networks (see MonadAddresses).
 interface IAllowanceTransfer {
     struct PermitDetails {

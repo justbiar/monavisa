@@ -4,7 +4,7 @@ import {
   subscriptionRegistryAbi,
   type WebhookEvent,
   type WebhookEventType,
-} from "@moncart/core";
+} from "@monavisa/core";
 import type { Address, BlockTag, Hex, PublicClient } from "viem";
 import type { Db } from "./db.js";
 

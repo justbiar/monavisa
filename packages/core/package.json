@@ -1,7 +1,7 @@
 {
-  "name": "@moncart/core",
+  "name": "@monavisa/core",
   "version": "0.0.0",
-  "description": "Chain config, canonical addresses, typed data and shared math for MonCart",
+  "description": "Chain config, canonical addresses, typed data and shared math for Mona Visa",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,

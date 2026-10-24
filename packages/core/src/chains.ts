@@ -37,7 +37,7 @@ export class UnsupportedChainError extends Error {
   readonly chainId: number;
 
   constructor(chainId: number) {
-    super(`Chain ${chainId} is not supported by MonCart`);
+    super(`Chain ${chainId} is not supported by Mona Visa`);
     this.name = "UnsupportedChainError";
     this.chainId = chainId;
   }

@@ -1,4 +1,4 @@
-import { getNetwork } from "@moncart/core";
+import { getNetwork } from "@monavisa/core";
 import { type Address, getAddress, isAddress, isHex } from "viem";
 import { z } from "zod";
 
@@ -37,7 +37,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
   }
   const c = parsed.data;
 
-  // Fall back to the addresses in @moncart/core once contracts are deployed on this chain.
+  // Fall back to the addresses in @monavisa/core once contracts are deployed on this chain.
   const deployed = getNetwork(c.CHAIN_ID).contracts;
   const pick = (name: string, value: Address | undefined, fallback: Address | null): Address => {
     const resolved = value ?? fallback;

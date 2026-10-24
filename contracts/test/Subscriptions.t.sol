@@ -9,9 +9,9 @@ import {PlanFactory} from "../src/PlanFactory.sol";
 import {IFeeCollector} from "../src/interfaces/IFeeCollector.sol";
 import {IPlanFactory} from "../src/interfaces/IPlanFactory.sol";
 import {ISubscriptionRegistry} from "../src/interfaces/ISubscriptionRegistry.sol";
-import {MonCartBase} from "./MonCartBase.t.sol";
+import {MonaVisaBase} from "./MonaVisaBase.t.sol";
 
-contract PlanFactoryTest is MonCartBase {
+contract PlanFactoryTest is MonaVisaBase {
     function test_createPlan_storesTerms() public {
         uint256 planId = _createPlan(7 days);
         IPlanFactory.Plan memory p = plans.getPlan(planId);
@@ -59,7 +59,7 @@ contract PlanFactoryTest is MonCartBase {
     }
 }
 
-contract SubscribeTest is MonCartBase {
+contract SubscribeTest is MonaVisaBase {
     function test_subscribe_chargesPricePlusFee() public {
         uint256 planId = _createPlan(0);
         uint256 subId = _subscribe(alice, planId);
@@ -161,7 +161,7 @@ contract SubscribeTest is MonCartBase {
     }
 }
 
-contract RenewalTest is MonCartBase {
+contract RenewalTest is MonaVisaBase {
     uint256 internal planId;
     uint256 internal subId;
     uint40 internal firstEnd;
@@ -309,7 +309,7 @@ contract RenewalTest is MonCartBase {
     }
 }
 
-contract FeeCollectorTest is MonCartBase {
+contract FeeCollectorTest is MonaVisaBase {
     function test_withdraw_routesToTreasury() public {
         _subscribe(alice, _createPlan(0));
         vm.prank(keeper);
@@ -366,7 +366,7 @@ contract FeeCollectorTest is MonCartBase {
     }
 }
 
-contract AdminTest is MonCartBase {
+contract AdminTest is MonaVisaBase {
     function test_rolesHandedToAdmin() public view {
         bytes32 adminRole = registry.DEFAULT_ADMIN_ROLE();
         assertTrue(registry.hasRole(adminRole, admin));

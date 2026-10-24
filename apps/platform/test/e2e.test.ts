@@ -8,8 +8,8 @@ import {
   monadTestnet,
   planFactoryAbi,
   subscriptionRegistryAbi,
-} from "@moncart/core";
-import { MonCartClient, verifyWebhook, type WebhookEvent } from "@moncart/node";
+} from "@monavisa/core";
+import { MonaVisaClient, verifyWebhook, type WebhookEvent } from "@monavisa/node";
 import {
   type Address,
   createPublicClient,
@@ -125,7 +125,7 @@ describe.skipIf(!RPC || !hasTools)("end to end on a Monad testnet fork", () => {
       let body = "";
       req.on("data", (chunk) => (body += chunk));
       req.on("end", () => {
-        received.push({ body, signature: req.headers["moncart-signature"] as string });
+        received.push({ body, signature: req.headers["monavisa-signature"] as string });
         res.writeHead(204).end();
       });
     });
@@ -189,7 +189,7 @@ describe.skipIf(!RPC || !hasTools)("end to end on a Monad testnet fork", () => {
     const { apiKey } = await createTeam(db, { name: "Kazim Berber", merchant });
     let apiNow = await chainNow();
     const apiAtChainTime = createApi(db, { chainId: monadTestnet.id, now: () => apiNow });
-    const client = new MonCartClient({
+    const client = new MonaVisaClient({
       apiKey,
       baseUrl: "http://platform.test",
       fetch: async (input, init) =>
@@ -198,7 +198,7 @@ describe.skipIf(!RPC || !hasTools)("end to end on a Monad testnet fork", () => {
 
     await client.setFeature("pro_tiras", [1]);
     const hookPort = (hooks.address() as AddressInfo).port;
-    const endpoint = await client.createWebhookEndpoint(`http://127.0.0.1:${hookPort}/moncart`);
+    const endpoint = await client.createWebhookEndpoint(`http://127.0.0.1:${hookPort}/monavisa`);
 
     expect((await client.checkEntitlement("pro_tiras", { address: alice })).enabled).toBe(true);
     expect((await client.checkEntitlement("pro_tiras", { address: keeper })).enabled).toBe(false);

@@ -10,7 +10,7 @@ interface IFiatToken {
     function TRANSFER_WITH_AUTHORIZATION_TYPEHASH() external view returns (bytes32);
 }
 
-/// @notice Checks that the canonical contracts MonCart relies on exist and behave as expected.
+/// @notice Checks that the canonical contracts Mona Visa relies on exist and behave as expected.
 /// @dev Skipped unless MONAD_TESTNET_RPC_URL / MONAD_RPC_URL are set.
 contract MonadCanonicalForkTest is Test {
     bytes32 internal constant EIP3009_TYPEHASH = keccak256(

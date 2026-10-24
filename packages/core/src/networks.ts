@@ -6,7 +6,7 @@ import {
   type SupportedChainId,
 } from "./chains.js";
 
-/** A stablecoin MonCart settles in, with the EIP-712 domain it signs under. */
+/** A stablecoin Mona Visa settles in, with the EIP-712 domain it signs under. */
 export interface Stablecoin {
   address: Address;
   symbol: string;
@@ -15,8 +15,8 @@ export interface Stablecoin {
   eip712: { name: string; version: string };
 }
 
-/** MonCart protocol contracts. `null` until deployed on that network. */
-export interface MonCartContracts {
+/** Mona Visa protocol contracts. `null` until deployed on that network. */
+export interface MonaVisaContracts {
   planFactory: Address | null;
   subscriptionRegistry: Address | null;
   autopayModule: Address | null;
@@ -30,7 +30,7 @@ export interface Network {
   permit2: Address;
   entryPointV07: Address;
   multicall3: Address;
-  contracts: MonCartContracts;
+  contracts: MonaVisaContracts;
 }
 
 // Canonical contracts share one address on both networks.
@@ -39,7 +39,7 @@ const PERMIT2: Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 const ENTRYPOINT_V07: Address = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 const MULTICALL3: Address = "0xcA11bde05977b3631167028862bE2a173976CA11";
 
-const NOT_DEPLOYED: MonCartContracts = {
+const NOT_DEPLOYED: MonaVisaContracts = {
   planFactory: null,
   subscriptionRegistry: null,
   autopayModule: null,
@@ -82,8 +82,8 @@ export function getNetwork(chainId: number): Network {
   return network;
 }
 
-/** Returns a deployed MonCart contract address, or throws if it is not deployed yet. */
-export function getContractAddress(chainId: number, name: keyof MonCartContracts): Address {
+/** Returns a deployed Mona Visa contract address, or throws if it is not deployed yet. */
+export function getContractAddress(chainId: number, name: keyof MonaVisaContracts): Address {
   const address = getNetwork(chainId).contracts[name];
   if (!address) throw new Error(`${name} is not deployed on chain ${chainId}`);
   return address;

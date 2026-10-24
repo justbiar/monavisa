@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { serve } from "@hono/node-server";
-import { getChain } from "@moncart/core";
+import { getChain } from "@monavisa/core";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { createApi } from "./api.js";
@@ -11,7 +11,7 @@ import { runKeeperOnce } from "./keeper.js";
 import { createTeam } from "./teams.js";
 import { deliverDue, fanOutEvents } from "./webhooks.js";
 
-const USAGE = `Usage: moncart-platform <command>
+const USAGE = `Usage: monavisa-platform <command>
 
   migrate                      Apply database migrations
   create-team <name> <merchant>  Create a team and print its API key once

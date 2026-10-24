@@ -1,7 +1,7 @@
 {
-  "name": "@moncart/node",
+  "name": "@monavisa/node",
   "version": "0.0.0",
-  "description": "Server SDK for MonCart: entitlement checks, customers, features and webhook verification",
+  "description": "Server SDK for Mona Visa: entitlement checks, customers, features and webhook verification",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
@@ -20,7 +20,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@moncart/core": "workspace:*"
+    "@monavisa/core": "workspace:*"
   },
   "devDependencies": {
     "viem": "2.57.4",

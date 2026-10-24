@@ -1,5 +1,5 @@
 {
-  "name": "moncart",
+  "name": "monavisa",
   "private": true,
   "description": "Non-custodial subscriptions, entitlements and agent payments on Monad",
   "packageManager": "pnpm@10.31.0",

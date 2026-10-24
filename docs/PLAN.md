@@ -1,4 +1,4 @@
-# MonCart · Tam Protokol Planı
+# Mona Visa · Tam Protokol Planı
 
 ArcenPay'in protokol modelini (abonelik, entitlement, x402 agent ödemeleri, escrow, mandate, MCP) tek zincir olarak Monad'a uyarlayan, non-custodial bir faturalama altyapısı.
 
@@ -10,7 +10,7 @@ Hedef: Monad testnet'te uçtan uca çalışan protokol, ardından audit ve mainn
 
 | Katman                 | İçerik                                                                                 |
 | ---------------------- | -------------------------------------------------------------------------------------- |
-| I. SDK'lar             | `@moncart/react`, `@moncart/node`, `@moncart/agent`, `@moncart/mcp`                    |
+| I. SDK'lar             | `@monavisa/react`, `@monavisa/node`, `@monavisa/agent`, `@monavisa/mcp`                |
 | II. Platform API       | Katalog, abonelik durumu, fatura, payment link, mandate, escrow kaydı, webhook         |
 | III. Settlement Engine | Yenileme job'ları, x402 facilitator, session vault muhasebesi, webhook dispatch        |
 | IV. Kontratlar         | `PlanFactory`, `SubscriptionRegistry`, `AutopayModule`, `FeeCollector`, `SessionVault` |
@@ -122,12 +122,12 @@ Agent tarafının tamamı burada:
 
 ## 4. Off-chain servisler
 
-> **Faz 2 durumu (2026-10-24):** hepsi tek paket olarak `apps/platform` içinde. Modüller ayrı süreç olarak da çalışıyor (`moncart-platform api|indexer|keeper|webhooks|all`). Redis ve Drizzle kullanılmadı, ince bir SQL katmanı yeterli oldu. Testlerde süreç içi Postgres (PGlite) kullanılıyor.
+> **Faz 2 durumu (2026-10-24):** hepsi tek paket olarak `apps/platform` içinde. Modüller ayrı süreç olarak da çalışıyor (`monavisa-platform api|indexer|keeper|webhooks|all`). Redis ve Drizzle kullanılmadı, ince bir SQL katmanı yeterli oldu. Testlerde süreç içi Postgres (PGlite) kullanılıyor.
 
 ### 4.1 Platform API (`apps/platform/src/api.ts`)
 
 - Stack: Node.js, Hono, Postgres.
-- Auth: merchant için secret API key (`mc_sk_...`, yalnızca sha256 hash'i saklanır). Dashboard için SIWE Faz 3'te.
+- Auth: merchant için secret API key (`mv_sk_...`, yalnızca sha256 hash'i saklanır). Dashboard için SIWE Faz 3'te.
 - Uygulanan uçlar: `GET /v1/entitlements/:feature?customer=`, `GET /v1/customers/:address/subscriptions`, `GET /v1/customers/:address/invoices`, `GET/PUT /v1/features/:key`, `GET/POST /v1/webhook-endpoints`, `GET /health`.
 - Entitlement çözümleme: indexer'daki on-chain durum, feature ile plan eşleşmesi ve grace süresi. Usage limitleri, payment link, checkout session, mandate ve escrow kaynakları sonraki fazlarda.
 - Fatura: her `Charged` event'i bir fatura satırı, tx hash bağlantılı. PDF Faz 3'te.
@@ -136,7 +136,7 @@ Agent tarafının tamamı burada:
 
 - **Renewal keeper:** vadesi gelen abonelikleri index'ten seçer, `renewMany` çağırır. Gas limiti `tahmin + %10`, çünkü Monad gas limit üzerinden ücretlendiriyor. Ödemesi başarısız olan abonelikler saatte bir yeniden denenir.
 - **x402 facilitator:** `exact` şeması (EIP-3009 ile anında transfer) ve `session` şeması (SessionVault bakiyesinden düşüm, batch settle). Faz 4.
-- **Webhook dispatcher:** outbox tablosundan endpoint başına teslim, HMAC-SHA256 imza (`moncart-signature: t=..,v1=..`), olay id'si ile idempotent, 30 saniyeden 6 saate üstel backoff, 8 denemeden sonra `failed`.
+- **Webhook dispatcher:** outbox tablosundan endpoint başına teslim, HMAC-SHA256 imza (`monavisa-signature: t=..,v1=..`), olay id'si ile idempotent, 30 saniyeden 6 saate üstel backoff, 8 denemeden sonra `failed`.
 
 Webhook event'leri: `subscription.created`, `subscription.renewed`, `subscription.renewal_failed`, `subscription.upgraded`, `subscription.downgraded`, `subscription.canceled`, `subscription.expired`, `invoice.created`, `invoice.paid`, `checkout.completed`, `payment_link.paid`, `session.opened`, `session.closed`, `x402.settled`, `escrow.settled`, `escrow.refunded`, `mandate.revoked`. Faz 2'de ilk yedisi ve `invoice.paid` üretiliyor.
 
@@ -149,29 +149,29 @@ Webhook event'leri: `subscription.created`, `subscription.renewed`, `subscriptio
 
 ## 5. SDK'lar
 
-### `@moncart/core`
+### `@monavisa/core`
 
 Adresler, ABI'ler, chain config (143 ve 10143), tipler, EIP-712 domain'leri. Diğer paketler buna bağlı.
 
-### `@moncart/react`
+### `@monavisa/react`
 
 - wagmi v2 ve viem üzerine.
-- Bileşenler: `<PricingTable>`, `<Checkout>`, `<SubscriptionStatus>`, `<ManageSubscription>`, `<MonCartEmbed>` (iframe'siz, dashboard'dan gelen tasarım token'ları ile).
+- Bileşenler: `<PricingTable>`, `<Checkout>`, `<SubscriptionStatus>`, `<ManageSubscription>`, `<MonaVisaEmbed>` (iframe'siz, dashboard'dan gelen tasarım token'ları ile).
 - Hook'lar: `useEntitlement(feature)`, `useSubscription()`, `useCheckout()`.
 
-### `@moncart/node`
+### `@monavisa/node`
 
-- `MonCartClient`: `checkEntitlement`, `listSubscriptions`, `listInvoices`, `setFeature`, `createWebhookEndpoint` (Faz 2). `recordUsage` ve `createPaymentLink` sonraki fazlarda.
+- `MonaVisaClient`: `checkEntitlement`, `listSubscriptions`, `listInvoices`, `setFeature`, `createWebhookEndpoint` (Faz 2). `recordUsage` ve `createPaymentLink` sonraki fazlarda.
 - `x402Middleware({ planId, ratePerCall, chainId: 143 })` (Express ve Hono).
 - `verifyWebhook(payload, signature, secret)`.
 
-### `@moncart/agent`
+### `@monavisa/agent`
 
 - `createAgentFetch()`: 402 yanıtını yakalar, challenge'ı parse eder, imzalar, tekrar dener.
 - Session yönetimi (aç, yükle, kapat), escrow istemcisi (`reserve`, `verify`, `confirm`).
 - Mandate oluşturma ve alt mandate türetme (kapsam yalnızca daralabilir).
 
-### `@moncart/mcp`
+### `@monavisa/mcp`
 
 MCP sunucusu, 12 araç: `get_balance`, `open_session`, `top_up_session`, `close_session`, `pay_x402`, `list_spend`, `create_mandate`, `revoke_mandate`, `escrow_reserve`, `escrow_verify_and_settle`, `check_entitlement`, `create_payment_link`. Her araç mandate bütçesine karşı kontrol edilir. Claude Desktop ve Cursor için yapılandırma örneği ile gelir.
 
@@ -202,7 +202,7 @@ Mandate {
 ## 7. Uygulamalar
 
 - `apps/dashboard` (Next.js): plan ve feature yönetimi, abone listesi, gelir grafikleri, webhook ayarları, API key'ler, checkout tasarım editörü.
-- `apps/checkout` (Next.js): hosted checkout ve payment link sayfaları, `pay.moncart.xyz/<id>` gibi.
+- `apps/checkout` (Next.js): hosted checkout ve payment link sayfaları, `pay.monavisa.xyz/<id>` gibi.
 - `apps/docs`: geliştirici dokümanı.
 - `examples/`: SaaS gating örneği, x402 korumalı API, MCP ile ödeme yapan agent.
 
@@ -211,7 +211,7 @@ Mandate {
 ## 8. Repo yapısı
 
 ```
-MonCart/
+MonaVisa/
   contracts/            # Foundry
   packages/
     core/  react/  node/  agent/  mcp/
@@ -244,7 +244,7 @@ pnpm workspaces ve Turborepo. TypeScript strict. Changesets ile paket versiyonla
 
 1. Fee oranları ve üst sınır ne olacak?
 2. Hosted servisler (API, engine) bizde mi kalacak, yoksa self-host seçeneği de olacak mı?
-3. Marka ve domain: `moncart.xyz` gibi bir domain alındı mı?
+3. Marka ve domain: `monavisa.xyz` gibi bir domain alındı mı?
 
 ## Kaynaklar
 

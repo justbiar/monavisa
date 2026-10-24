@@ -1,4 +1,4 @@
-import { autopayModuleAbi } from "@moncart/core";
+import { autopayModuleAbi } from "@monavisa/core";
 import type { Account, Address, Chain, Hex, PublicClient, Transport, WalletClient } from "viem";
 import type { Db } from "./db.js";
 

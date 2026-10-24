@@ -5,9 +5,9 @@ import {Script} from "forge-std/Script.sol";
 import {IAllowanceTransfer} from "../src/interfaces/IAllowanceTransfer.sol";
 import {MonadAddresses} from "../src/libraries/MonadAddresses.sol";
 import {MockUSDC} from "../test/mocks/MockUSDC.sol";
-import {DeployMonCart} from "./DeployMonCart.s.sol";
+import {DeployMonaVisa} from "./DeployMonaVisa.s.sol";
 
-/// @notice Deploys MonCart plus a mintable mock USDC to a local anvil fork of Monad testnet,
+/// @notice Deploys Mona Visa plus a mintable mock USDC to a local anvil fork of Monad testnet,
 ///         using the real Permit2 from the fork, and writes the addresses to deployments/local.json.
 ///
 ///   anvil --fork-url https://testnet-rpc.monad.xyz
@@ -16,10 +16,10 @@ contract DeployLocal is Script {
     function run() external {
         vm.startBroadcast();
         MockUSDC usdc = new MockUSDC();
-        DeployMonCart deployer = new DeployMonCart();
+        DeployMonaVisa deployer = new DeployMonaVisa();
         address[] memory tokens = new address[](1);
         tokens[0] = address(usdc);
-        DeployMonCart.Deployment memory d = deployer.deployWith(
+        DeployMonaVisa.Deployment memory d = deployer.deployWith(
             address(deployer),
             msg.sender,
             msg.sender,

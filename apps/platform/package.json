@@ -1,12 +1,12 @@
 {
-  "name": "@moncart/platform",
+  "name": "@monavisa/platform",
   "version": "0.0.0",
   "private": true,
-  "description": "MonCart platform: chain indexer, renewal keeper, webhook dispatcher and HTTP API",
+  "description": "Mona Visa platform: chain indexer, renewal keeper, webhook dispatcher and HTTP API",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "moncart-platform": "./dist/main.js"
+    "monavisa-platform": "./dist/main.js"
   },
   "exports": {
     ".": {
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.4",
-    "@moncart/core": "workspace:*",
+    "@monavisa/core": "workspace:*",
     "hono": "4.13.13",
     "pg": "8.23.1",
     "viem": "2.57.4",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
-    "@moncart/node": "workspace:*",
+    "@monavisa/node": "workspace:*",
     "@types/pg": "8.23.1",
     "vitest": "5.0.3"
   }

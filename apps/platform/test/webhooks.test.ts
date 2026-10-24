@@ -1,4 +1,4 @@
-import { verifyWebhook } from "@moncart/core";
+import { verifyWebhook } from "@monavisa/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../src/db.js";
 import { createTeam } from "../src/teams.js";
@@ -52,7 +52,7 @@ describe("webhook dispatch", () => {
     const received: { body: string; signature: string | null }[] = [];
     const fakeFetch: typeof fetch = async (_url, init) => {
       const headers = new Headers(init?.headers);
-      received.push({ body: String(init?.body), signature: headers.get("moncart-signature") });
+      received.push({ body: String(init?.body), signature: headers.get("monavisa-signature") });
       return new Response(null, { status: 204 });
     };
 

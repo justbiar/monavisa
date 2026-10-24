@@ -38,7 +38,7 @@ contract SubscriptionRegistry is
     }
 
     function initialize(address admin, IPlanFactory planFactory_) external initializer {
-        __ERC721_init("MonCart Subscription", "MCSUB");
+        __ERC721_init("Mona Visa Subscription", "MVSUB");
         __AccessControl_init();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         planFactory = planFactory_;

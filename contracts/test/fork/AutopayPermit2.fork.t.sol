@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
-import {DeployMonCart} from "../../script/DeployMonCart.s.sol";
+import {DeployMonaVisa} from "../../script/DeployMonaVisa.s.sol";
 import {AutopayModule} from "../../src/AutopayModule.sol";
 import {IAllowanceTransfer} from "../../src/interfaces/IAllowanceTransfer.sol";
 import {MonadAddresses} from "../../src/libraries/MonadAddresses.sol";
@@ -23,7 +23,7 @@ contract AutopayPermit2ForkTest is Test {
 
     MockUSDC internal token;
     IAllowanceTransfer internal permit2 = IAllowanceTransfer(MonadAddresses.PERMIT2);
-    DeployMonCart.Deployment internal d;
+    DeployMonaVisa.Deployment internal d;
     address internal merchantTreasury = makeAddr("merchantTreasury");
     uint256 internal planId;
     bool internal forked;
@@ -35,7 +35,7 @@ contract AutopayPermit2ForkTest is Test {
         forked = true;
 
         token = new MockUSDC();
-        DeployMonCart script = new DeployMonCart();
+        DeployMonaVisa script = new DeployMonaVisa();
         address[] memory tokens = new address[](1);
         tokens[0] = address(token);
         d = script.deployWith(

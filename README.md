@@ -1,4 +1,4 @@
-# MonCart
+# Mona Visa
 
 Non-custodial subscriptions, entitlements and agent payments on Monad. See [docs/PLAN.md](docs/PLAN.md) for the full protocol plan.
 
@@ -6,8 +6,8 @@ Non-custodial subscriptions, entitlements and agent payments on Monad. See [docs
 
 ```
 contracts/        Foundry project (Solidity 0.8.30, evm_version prague)
-packages/core/    @moncart/core: chains, addresses, ABIs, EIP-3009 typed data, fees, entitlement, webhook signing
-packages/node/    @moncart/node: server SDK (entitlement checks, customers, features, webhook verification)
+packages/core/    @monavisa/core: chains, addresses, ABIs, EIP-3009 typed data, fees, entitlement, webhook signing
+packages/node/    @monavisa/node: server SDK (entitlement checks, customers, features, webhook verification)
 apps/platform/    Indexer, renewal keeper, webhook dispatcher and HTTP API
 pitch/            90 second pitch page
 ```
@@ -38,7 +38,7 @@ pnpm contracts:test # forge tests (fork tests run when MONAD_RPC_URL / MONAD_TES
 ## Running the platform
 
 ```bash
-pnpm --filter @moncart/platform build
+pnpm --filter @monavisa/platform build
 cd apps/platform
 node dist/main.js migrate
 node dist/main.js create-team "My Team" 0xYourMerchantAddress   # prints the API key once
@@ -48,14 +48,14 @@ node dist/main.js all                                          # api + indexer +
 Then from your backend:
 
 ```ts
-import { MonCartClient } from "@moncart/node";
+import { MonaVisaClient } from "@monavisa/node";
 
-const moncart = new MonCartClient({
-  apiKey: process.env.MONCART_API_KEY!,
+const monavisa = new MonaVisaClient({
+  apiKey: process.env.MONAVISA_API_KEY!,
   baseUrl: "http://localhost:8787",
 });
-await moncart.setFeature("pro_dashboard", [1]);
-const { enabled } = await moncart.checkEntitlement("pro_dashboard", { address: customerWallet });
+await monavisa.setFeature("pro_dashboard", [1]);
+const { enabled } = await monavisa.checkEntitlement("pro_dashboard", { address: customerWallet });
 ```
 
 ## Local devnet

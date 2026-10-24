@@ -21,7 +21,7 @@ export async function createTeam(
     name: input.name,
     merchant: input.merchant.toLowerCase(),
   };
-  const apiKey = `mc_sk_${randomBytes(24).toString("hex")}`;
+  const apiKey = `mv_sk_${randomBytes(24).toString("hex")}`;
   await db.query("insert into teams (id, name, merchant, api_key_hash) values ($1, $2, $3, $4)", [
     team.id,
     team.name,

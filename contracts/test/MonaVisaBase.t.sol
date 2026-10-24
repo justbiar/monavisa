@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
-import {DeployMonCart} from "../script/DeployMonCart.s.sol";
+import {DeployMonaVisa} from "../script/DeployMonaVisa.s.sol";
 import {AutopayModule} from "../src/AutopayModule.sol";
 import {FeeCollector} from "../src/FeeCollector.sol";
 import {PlanFactory} from "../src/PlanFactory.sol";
@@ -12,7 +12,7 @@ import {MockPermit2} from "./mocks/MockPermit2.sol";
 import {MockUSDC} from "./mocks/MockUSDC.sol";
 
 /// @dev Deploys the full Faz 1 stack through the real deploy script, against mock USDC and Permit2.
-abstract contract MonCartBase is Test {
+abstract contract MonaVisaBase is Test {
     uint96 internal constant PRICE = 49e6; // 49 USDC
     uint32 internal constant PERIOD = 30 days;
     uint32 internal constant GRACE = 3 days;
@@ -38,10 +38,10 @@ abstract contract MonCartBase is Test {
         usdc = new MockUSDC();
         permit2 = new MockPermit2();
 
-        DeployMonCart script = new DeployMonCart();
+        DeployMonaVisa script = new DeployMonaVisa();
         address[] memory tokens = new address[](1);
         tokens[0] = address(usdc);
-        DeployMonCart.Deployment memory d = script.deployWith(
+        DeployMonaVisa.Deployment memory d = script.deployWith(
             address(script),
             admin,
             protocolTreasury,

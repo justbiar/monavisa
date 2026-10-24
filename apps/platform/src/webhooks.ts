@@ -1,4 +1,4 @@
-import { WEBHOOK_ID_HEADER, WEBHOOK_SIGNATURE_HEADER, signWebhook } from "@moncart/core";
+import { WEBHOOK_ID_HEADER, WEBHOOK_SIGNATURE_HEADER, signWebhook } from "@monavisa/core";
 import type { Db } from "./db.js";
 
 export const MAX_ATTEMPTS = 8;

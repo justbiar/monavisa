@@ -1,5 +1,5 @@
-export const WEBHOOK_SIGNATURE_HEADER = "moncart-signature";
-export const WEBHOOK_ID_HEADER = "moncart-event-id";
+export const WEBHOOK_SIGNATURE_HEADER = "monavisa-signature";
+export const WEBHOOK_ID_HEADER = "monavisa-event-id";
 
 export const webhookEventTypes = [
   "subscription.created",

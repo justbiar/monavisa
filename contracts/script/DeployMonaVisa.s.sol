@@ -15,10 +15,10 @@ import {MonadAddresses} from "../src/libraries/MonadAddresses.sol";
 /// @notice Deploys the Faz 1 contracts behind UUPS proxies and wires their roles.
 ///
 ///   ADMIN=0x... TREASURY=0x... SUBSCRIPTION_FEE_BPS=100 \
-///   forge script script/DeployMonCart.s.sol --rpc-url monad_testnet --account <keystore> --broadcast
+///   forge script script/DeployMonaVisa.s.sol --rpc-url monad_testnet --account <keystore> --broadcast
 ///
 /// ADMIN should be a Safe on mainnet. Omit --broadcast for a dry run.
-contract DeployMonCart is Script {
+contract DeployMonaVisa is Script {
     struct Deployment {
         FeeCollector feeCollector;
         PlanFactory planFactory;

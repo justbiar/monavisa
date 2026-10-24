@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MonCartClient, MonCartError } from "../src/index.js";
+import { MonaVisaClient, MonaVisaError } from "../src/index.js";
 
 const customer = { address: "0x00000000000000000000000000000000000a11ce" } as const;
 
@@ -10,11 +10,11 @@ function fakeFetch(status: number, body: unknown, seen: Request[] = []): typeof 
   };
 }
 
-describe("MonCartClient", () => {
+describe("MonaVisaClient", () => {
   it("checks an entitlement with the API key and customer address", async () => {
     const seen: Request[] = [];
-    const client = new MonCartClient({
-      apiKey: "mc_sk_test",
+    const client = new MonaVisaClient({
+      apiKey: "mv_sk_test",
       baseUrl: "https://api.example.com/",
       fetch: fakeFetch(200, { feature: "analytics_export", enabled: true }, seen),
     });
@@ -26,12 +26,12 @@ describe("MonCartClient", () => {
     expect(req.url).toBe(
       `https://api.example.com/v1/entitlements/analytics_export?customer=${customer.address}`,
     );
-    expect(req.headers.get("authorization")).toBe("Bearer mc_sk_test");
+    expect(req.headers.get("authorization")).toBe("Bearer mv_sk_test");
   });
 
   it("sends JSON bodies for writes", async () => {
     const seen: Request[] = [];
-    const client = new MonCartClient({
+    const client = new MonaVisaClient({
       apiKey: "k",
       fetch: fakeFetch(200, { key: "pro", planIds: ["1"] }, seen),
     });
@@ -40,20 +40,20 @@ describe("MonCartClient", () => {
     expect(await seen[0]!.json()).toEqual({ planIds: ["1"] });
   });
 
-  it("raises MonCartError with the API's message", async () => {
-    const client = new MonCartClient({
+  it("raises MonaVisaError with the API's message", async () => {
+    const client = new MonaVisaClient({
       apiKey: "k",
       fetch: fakeFetch(404, { error: "Feature 'x' is not defined" }),
     });
     await expect(client.checkEntitlement("x", customer)).rejects.toMatchObject({
-      name: "MonCartError",
+      name: "MonaVisaError",
       status: 404,
       message: "Feature 'x' is not defined",
     });
-    await expect(client.checkEntitlement("x", customer)).rejects.toBeInstanceOf(MonCartError);
+    await expect(client.checkEntitlement("x", customer)).rejects.toBeInstanceOf(MonaVisaError);
   });
 
   it("requires an API key", () => {
-    expect(() => new MonCartClient({ apiKey: "" })).toThrow(/apiKey/);
+    expect(() => new MonaVisaClient({ apiKey: "" })).toThrow(/apiKey/);
   });
 });
