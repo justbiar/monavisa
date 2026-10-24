@@ -9,7 +9,8 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["MONAD_RPC_URL", "MONAD_TESTNET_RPC_URL"]
     }
   }
 }

@@ -86,7 +86,7 @@ Hepsi UUPS proxy arkasında, `AccessControl` ile yönetilir. Admin rolü bir Saf
 - Yalnızca `AutopayModule` dönemi uzatabilir.
 - NFT varsayılan olarak transfer edilemez (soulbound). Plan bazında açılabilir.
 
-> **Faz 1 durumu (2026-10-24):** abone ol, yenile, iptal, grace ve süre dolumu uygulandı. Upgrade, downgrade ve proration henüz yok, Faz 2'de eklenecek. Yeni fiyat şu an yeni bir plan olarak açılıyor.
+> **Durum (2026-10-24):** abone ol, yenile, iptal, grace ve süre dolumu Faz 1'de; plan değiştirme Faz 2'de uygulandı. Daha pahalı plana geçiş hemen olur ve mevcut ödenmiş dönemin kalan kısmı kredi olarak düşülür (deneme süresi kredi sayılmaz). Daha ucuz plana geçiş bir sonraki yenilemede uygulanır, böylece iade gerekmez. Fiyat değişikliği yeni plan olarak açılır.
 
 ### 3.3 `AutopayModule`
 
@@ -122,25 +122,28 @@ Agent tarafının tamamı burada:
 
 ## 4. Off-chain servisler
 
-### 4.1 Platform API (`apps/api`)
+> **Faz 2 durumu (2026-10-24):** hepsi tek paket olarak `apps/platform` içinde. Modüller ayrı süreç olarak da çalışıyor (`moncart-platform api|indexer|keeper|webhooks|all`). Redis ve Drizzle kullanılmadı, ince bir SQL katmanı yeterli oldu. Testlerde süreç içi Postgres (PGlite) kullanılıyor.
 
-- Stack: Node.js, Hono, Postgres (Drizzle), Redis (BullMQ).
-- Auth: merchant için API key (secret ve publishable ayrı), dashboard için SIWE.
-- Kaynaklar: `teams`, `products`, `plans`, `features`, `entitlement_rules`, `customers`, `subscriptions`, `invoices`, `payment_links`, `checkout_sessions`, `mandates`, `escrows`, `webhook_endpoints`.
-- Entitlement çözümleme: önce indexer'daki on-chain durum, sonra plan ve feature eşleşmesi, sonra usage limiti. Sonuç Redis'te kısa süreli cache'lenir.
-- Fatura: her başarılı yenileme ve tek seferlik ödeme için PDF fatura, tx hash bağlantılı.
+### 4.1 Platform API (`apps/platform/src/api.ts`)
 
-### 4.2 Settlement Engine (`apps/engine`)
+- Stack: Node.js, Hono, Postgres.
+- Auth: merchant için secret API key (`mc_sk_...`, yalnızca sha256 hash'i saklanır). Dashboard için SIWE Faz 3'te.
+- Uygulanan uçlar: `GET /v1/entitlements/:feature?customer=`, `GET /v1/customers/:address/subscriptions`, `GET /v1/customers/:address/invoices`, `GET/PUT /v1/features/:key`, `GET/POST /v1/webhook-endpoints`, `GET /health`.
+- Entitlement çözümleme: indexer'daki on-chain durum, feature ile plan eşleşmesi ve grace süresi. Usage limitleri, payment link, checkout session, mandate ve escrow kaynakları sonraki fazlarda.
+- Fatura: her `Charged` event'i bir fatura satırı, tx hash bağlantılı. PDF Faz 3'te.
 
-- **Renewal keeper:** süresi yaklaşan abonelikleri indexer'dan çeker, gruplar halinde `renew` çağırır. Gas limiti hassas tahminle verilir.
-- **x402 facilitator:** `exact` şeması (EIP-3009 ile anında transfer) ve `session` şeması (SessionVault bakiyesinden düşüm, batch settle). Replay koruması nonce ile.
-- **Webhook dispatcher:** 17 event tipi, HMAC-SHA256 imzalı, idempotency key'li, exponential backoff.
+### 4.2 Keeper ve webhook'lar
 
-Webhook event'leri: `subscription.created`, `subscription.renewed`, `subscription.renewal_failed`, `subscription.upgraded`, `subscription.downgraded`, `subscription.canceled`, `subscription.expired`, `invoice.created`, `invoice.paid`, `checkout.completed`, `payment_link.paid`, `session.opened`, `session.closed`, `x402.settled`, `escrow.settled`, `escrow.refunded`, `mandate.revoked`.
+- **Renewal keeper:** vadesi gelen abonelikleri index'ten seçer, `renewMany` çağırır. Gas limiti `tahmin + %10`, çünkü Monad gas limit üzerinden ücretlendiriyor. Ödemesi başarısız olan abonelikler saatte bir yeniden denenir.
+- **x402 facilitator:** `exact` şeması (EIP-3009 ile anında transfer) ve `session` şeması (SessionVault bakiyesinden düşüm, batch settle). Faz 4.
+- **Webhook dispatcher:** outbox tablosundan endpoint başına teslim, HMAC-SHA256 imza (`moncart-signature: t=..,v1=..`), olay id'si ile idempotent, 30 saniyeden 6 saate üstel backoff, 8 denemeden sonra `failed`.
 
-### 4.3 Indexer (`apps/indexer`)
+Webhook event'leri: `subscription.created`, `subscription.renewed`, `subscription.renewal_failed`, `subscription.upgraded`, `subscription.downgraded`, `subscription.canceled`, `subscription.expired`, `invoice.created`, `invoice.paid`, `checkout.completed`, `payment_link.paid`, `session.opened`, `session.closed`, `x402.settled`, `escrow.settled`, `escrow.refunded`, `mandate.revoked`. Faz 2'de ilk yedisi ve `invoice.paid` üretiliyor.
 
-- Ponder ile tüm kontrat event'leri Postgres'e. API ve dashboard tarihsel veriyi buradan okur.
+### 4.3 Indexer (`apps/platform/src/indexer.ts`)
+
+- Ponder yerine viem ile kendi indexer'ımız. Gerekçe: Monad'da finality yaklaşık 1 saniye olduğu için reorg yönetimine gerek yok, ve public RPC'lerin `eth_getLogs` sınırı (100 blok) basit bir parçalı taramayla karşılanıyor.
+- `finalized` bloğa kadar tarar. Etkilenen plan ve abonelikleri o bloktaki kontrat durumundan okuyup yazar, event'leri webhook outbox'ına ekler. Tüm yazımlar idempotent.
 
 ---
 
@@ -158,7 +161,7 @@ Adresler, ABI'ler, chain config (143 ve 10143), tipler, EIP-712 domain'leri. Di�
 
 ### `@moncart/node`
 
-- `MonCartClient`: `checkEntitlement`, `recordUsage`, `createPaymentLink`, `listInvoices`.
+- `MonCartClient`: `checkEntitlement`, `listSubscriptions`, `listInvoices`, `setFeature`, `createWebhookEndpoint` (Faz 2). `recordUsage` ve `createPaymentLink` sonraki fazlarda.
 - `x402Middleware({ planId, ratePerCall, chainId: 143 })` (Express ve Hono).
 - `verifyWebhook(payload, signature, secret)`.
 
@@ -213,7 +216,7 @@ MonCart/
   packages/
     core/  react/  node/  agent/  mcp/
   apps/
-    api/  engine/  indexer/  dashboard/  checkout/  docs/
+    platform/  dashboard/  checkout/  docs/
   examples/
   docs/
 ```

@@ -12,3 +12,5 @@ contracts/out/
 contracts/cache/
 contracts/broadcast/*/31337/
 contracts/broadcast/*/*/dry-run/
+contracts/deployments/*.json
+contracts/broadcast/DeployLocal.s.sol/
