@@ -37,4 +37,6 @@ interface IPlanFactory {
     error NotPlanMerchant(uint256 planId, address caller);
 
     function getPlan(uint256 planId) external view returns (Plan memory);
+
+    function allowedToken(address token) external view returns (bool);
 }
