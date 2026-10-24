@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 import type { AppEnv, PlanMerchantReader } from "./context.js";
-import type { Db } from "./db.js";
+import { type Db, NOW_SQL } from "./db.js";
 import { lastIndexedBlock } from "./indexer.js";
 import { SUBSCRIPTION_SELECT, type SubscriptionRow, toSubscription } from "./subscriptions.js";
 import { createApiKey, listApiKeys, renameTeam, revokeApiKey } from "./teams.js";
@@ -65,7 +65,7 @@ export function dashboardRoutes(db: Db, options: DashboardOptions) {
     const nowSec = now();
     const subs = await db.query<{
       status: number;
-      in_trial: boolean;
+      in_trial: number;
       period_end: string;
       price: string;
       period: number;
@@ -125,7 +125,7 @@ export function dashboardRoutes(db: Db, options: DashboardOptions) {
       trial_period: number;
       grace_period: number;
       treasury: string;
-      active: boolean;
+      active: number;
       name: string | null;
       description: string | null;
       active_count: string;
@@ -156,7 +156,7 @@ export function dashboardRoutes(db: Db, options: DashboardOptions) {
         trialPeriod: r.trial_period,
         gracePeriod: r.grace_period,
         treasury: r.treasury,
-        active: r.active,
+        active: Boolean(r.active),
         subscribers: {
           active: Number(r.active_count),
           trialing: Number(r.trialing_count),
@@ -177,7 +177,7 @@ export function dashboardRoutes(db: Db, options: DashboardOptions) {
     await db.query(
       `insert into plan_metadata (plan_id, name, description) values ($1, $2, $3)
        on conflict (plan_id) do update set name = excluded.name, description = excluded.description,
-         updated_at = now()`,
+         updated_at = ${NOW_SQL}`,
       [planId, parsed.data.name, parsed.data.description ?? null],
     );
     return c.json({
@@ -248,6 +248,114 @@ export function dashboardRoutes(db: Db, options: DashboardOptions) {
     });
   });
 
+  app.get("/revenue", async (c) => {
+    const merchant = c.get("team").merchant;
+    const days = Math.min(Math.max(Number(c.req.query("days") ?? 30) || 30, 7), 365);
+    const nowSec = now();
+    const startSec = nowSec - days * DAY_SEC;
+
+    const rows = await db.query<{ day: string; token: string; amount: string; fee: string }>(
+      `select strftime('%Y-%m-%d', i.paid_at, 'unixepoch') as day, i.token, i.amount, i.fee
+       from invoices i
+       join subscriptions s on s.sub_id = i.sub_id
+       join plans p on p.plan_id = s.plan_id
+       where p.merchant = $1 and i.paid_at >= $2
+       order by day asc`,
+      [merchant, startSec],
+    );
+
+    // Summed here with BigInt: amounts are decimal text, beyond what SQLite integers can hold.
+    const buckets = new Map<string, { date: string; token: string; amount: bigint; fee: bigint; count: number }>();
+    for (const r of rows) {
+      const key = `${r.day}|${r.token}`;
+      const bucket = buckets.get(key) ?? { date: r.day, token: r.token, amount: 0n, fee: 0n, count: 0 };
+      bucket.amount += BigInt(r.amount);
+      bucket.fee += BigInt(r.fee);
+      bucket.count++;
+      buckets.set(key, bucket);
+    }
+
+    return c.json({
+      days,
+      data: [...buckets.values()].map((b) => ({
+        date: b.date,
+        token: b.token,
+        amount: b.amount.toString(),
+        fee: b.fee.toString(),
+        count: b.count,
+      })),
+    });
+  });
+
+  app.get("/invoices/:id/pdf", async (c) => {
+    const id = c.req.param("id");
+    const [inv] = await db.query<{
+      id: string;
+      sub_id: string;
+      payer: string;
+      token: string;
+      amount: string;
+      fee: string;
+      tx_hash: string;
+      paid_at: string;
+      plan_id: string;
+      name: string | null;
+    }>(
+      `select i.id, i.sub_id, i.payer, i.token, i.amount, i.fee, i.tx_hash, i.paid_at, s.plan_id, m.name
+       from invoices i
+       join subscriptions s on s.sub_id = i.sub_id
+       join plans p on p.plan_id = s.plan_id
+       left join plan_metadata m on m.plan_id = s.plan_id
+       where i.id = $1 and p.merchant = $2`,
+      [id, c.get("team").merchant],
+    );
+
+    if (!inv) return c.json({ error: "Invoice not found" }, 404);
+
+    const pdfData = `%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj << /Length 300 >> stream
+BT
+/F1 20 Tf
+50 720 Td
+(MONA VISA INVOICE #${inv.id}) Tj
+/F1 12 Tf
+0 -40 Td
+(Date: ${new Date(Number(inv.paid_at) * 1000).toISOString()}) Tj
+0 -25 Td
+(Customer: ${inv.payer}) Tj
+0 -25 Td
+(Subscription ID: #${inv.sub_id}) Tj
+0 -25 Td
+(Plan: ${inv.name ?? "Plan #" + inv.plan_id}) Tj
+0 -25 Td
+(Amount Paid: ${inv.amount} USDC) Tj
+0 -25 Td
+(Transaction Hash: ${inv.tx_hash}) Tj
+ET
+endstream
+endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000244 00000 n 
+0000000596 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+665
+%%EOF`;
+
+    c.header("Content-Type", "application/pdf");
+    c.header("Content-Disposition", `attachment; filename="invoice-${id}.pdf"`);
+    return c.body(pdfData);
+  });
+
   const linkUrl = (id: string) =>
     options.checkoutBaseUrl ? `${options.checkoutBaseUrl.replace(/\/$/, "")}/l/${id}` : null;
 
@@ -261,7 +369,7 @@ export function dashboardRoutes(db: Db, options: DashboardOptions) {
     }>(
       `select l.id, l.plan_id, l.label, l.created_at, m.name from payment_links l
        left join plan_metadata m on m.plan_id = l.plan_id
-       where l.team_id = $1 and l.active order by l.created_at desc`,
+       where l.team_id = $1 and l.active order by l.created_at desc, l.rowid desc`,
       [c.get("team").id],
     );
     return c.json({

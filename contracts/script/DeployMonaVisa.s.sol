@@ -6,24 +6,29 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {AutopayModule} from "../src/AutopayModule.sol";
 import {FeeCollector} from "../src/FeeCollector.sol";
 import {PlanFactory} from "../src/PlanFactory.sol";
+import {SessionVault} from "../src/SessionVault.sol";
 import {SubscriptionRegistry} from "../src/SubscriptionRegistry.sol";
 import {IAllowanceTransfer} from "../src/interfaces/IAllowanceTransfer.sol";
 import {IPlanFactory} from "../src/interfaces/IPlanFactory.sol";
 import {ISubscriptionRegistry} from "../src/interfaces/ISubscriptionRegistry.sol";
 import {MonadAddresses} from "../src/libraries/MonadAddresses.sol";
 
-/// @notice Deploys the Faz 1 contracts behind UUPS proxies and wires their roles.
+/// @notice Deploys the Mona Visa contracts behind UUPS proxies and wires their roles.
 ///
 ///   ADMIN=0x... TREASURY=0x... SUBSCRIPTION_FEE_BPS=100 \
 ///   forge script script/DeployMonaVisa.s.sol --rpc-url monad_testnet --account <keystore> --broadcast
 ///
 /// ADMIN should be a Safe on mainnet. Omit --broadcast for a dry run.
 contract DeployMonaVisa is Script {
+    /// @notice Time payees get to redeem session vouchers after a close request or expiry.
+    uint32 public constant SESSION_CLOSE_DELAY = 1 days;
+
     struct Deployment {
         FeeCollector feeCollector;
         PlanFactory planFactory;
         SubscriptionRegistry registry;
         AutopayModule autopay;
+        SessionVault sessionVault;
     }
 
     function run() external returns (Deployment memory d) {
@@ -40,6 +45,7 @@ contract DeployMonaVisa is Script {
         console.log("PlanFactory         ", address(d.planFactory));
         console.log("SubscriptionRegistry", address(d.registry));
         console.log("AutopayModule       ", address(d.autopay));
+        console.log("SessionVault        ", address(d.sessionVault));
     }
 
     /// @dev The deployer holds admin only while wiring, then hands every admin role to `admin`.
@@ -110,8 +116,24 @@ contract DeployMonaVisa is Script {
             )
         );
 
+        d.sessionVault = SessionVault(
+            _proxy(
+                address(new SessionVault()),
+                abi.encodeCall(
+                    SessionVault.initialize,
+                    (
+                        admin,
+                        IPlanFactory(address(d.planFactory)),
+                        d.feeCollector,
+                        SESSION_CLOSE_DELAY
+                    )
+                )
+            )
+        );
+
         d.registry.grantRole(d.registry.MODULE_ROLE(), address(d.autopay));
         d.feeCollector.grantRole(d.feeCollector.FEE_SOURCE_ROLE(), address(d.autopay));
+        d.feeCollector.grantRole(d.feeCollector.FEE_SOURCE_ROLE(), address(d.sessionVault));
 
         if (deployer != admin) {
             bytes32 adminRole = d.registry.DEFAULT_ADMIN_ROLE();

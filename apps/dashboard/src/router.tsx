@@ -1,6 +1,6 @@
 import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 
-export type Page = "overview" | "plans" | "subscribers" | "payments" | "links" | "settings";
+export type Page = "overview" | "plans" | "subscribers" | "payments" | "links" | "features" | "settings";
 
 export const PAGES: { page: Page; path: string; label: string }[] = [
   { page: "overview", path: "/", label: "Genel bakış" },
@@ -8,6 +8,7 @@ export const PAGES: { page: Page; path: string; label: string }[] = [
   { page: "subscribers", path: "/subscribers", label: "Aboneler" },
   { page: "payments", path: "/payments", label: "Ödemeler" },
   { page: "links", path: "/links", label: "Linkler" },
+  { page: "features", path: "/features", label: "Özellikler" },
   { page: "settings", path: "/settings", label: "Ayarlar" },
 ];
 

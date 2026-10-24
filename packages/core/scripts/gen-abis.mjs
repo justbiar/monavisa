@@ -3,7 +3,14 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const CONTRACTS = ["PlanFactory", "SubscriptionRegistry", "AutopayModule", "FeeCollector"];
+const CONTRACTS = [
+  "PlanFactory",
+  "SubscriptionRegistry",
+  "AutopayModule",
+  "FeeCollector",
+  "SessionVault",
+  "Autopay7579Executor",
+];
 
 const out = new URL("../../../contracts/out/", import.meta.url);
 const target = fileURLToPath(new URL("../src/abis.ts", import.meta.url));

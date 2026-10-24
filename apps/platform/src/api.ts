@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { webhookEventTypes } from "@monavisa/core";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { type Hex, isAddress, isHex } from "viem";
+import { type Account, type Address, type Chain, type Hex, isAddress, isHex, type PublicClient, type Transport, type WalletClient } from "viem";
 import { z } from "zod";
 import {
   SESSION_PREFIX,
@@ -14,7 +14,8 @@ import {
 } from "./auth.js";
 import type { AppEnv, PlanMerchantReader } from "./context.js";
 import { dashboardRoutes } from "./dashboard.js";
-import type { Db } from "./db.js";
+import { type Db, jsonList } from "./db.js";
+import { createFacilitatorRouter } from "./facilitator.js";
 import { lastIndexedBlock } from "./indexer.js";
 import { publicRoutes } from "./public.js";
 import { SUBSCRIPTION_SELECT, type SubscriptionRow, toSubscription } from "./subscriptions.js";
@@ -32,6 +33,9 @@ export interface ApiOptions {
   corsOrigins?: readonly string[];
   readPlanMerchant?: PlanMerchantReader;
   checkoutBaseUrl?: string;
+  sessionVault?: Address;
+  publicClient?: PublicClient;
+  facilitatorWallet?: WalletClient<Transport, Chain, Account>;
 }
 
 const featureBody = z.object({ planIds: z.array(z.string().regex(/^\d+$/)).min(1) });
@@ -73,6 +77,19 @@ export function createApi(db: Db, options: ApiOptions) {
   });
 
   app.route("/public", publicRoutes(db));
+
+  if (options.sessionVault && options.publicClient) {
+    app.route(
+      "/x402",
+      createFacilitatorRouter(db, {
+        chainId: options.chainId,
+        sessionVault: options.sessionVault,
+        publicClient: options.publicClient,
+        ...(options.facilitatorWallet ? { walletClient: options.facilitatorWallet } : {}),
+        now,
+      }),
+    );
+  }
 
   // ---------------------------------------------------------------- dashboard sign-in (SIWE)
 
@@ -134,7 +151,7 @@ export function createApi(db: Db, options: ApiOptions) {
       return c.json({ error: "Query parameter 'customer' must be a wallet address" }, 400);
     }
 
-    const [row] = await db.query<{ plan_ids: string[] }>(
+    const [row] = await db.query<{ plan_ids: string }>(
       "select plan_ids from features where team_id = $1 and key = $2",
       [team.id, feature],
     );
@@ -142,9 +159,10 @@ export function createApi(db: Db, options: ApiOptions) {
 
     const subs = await db.query<SubscriptionRow>(
       `${SUBSCRIPTION_SELECT}
-       where s.subscriber = $1 and s.plan_id = any($2::bigint[]) and p.merchant = $3
+       where s.subscriber = $1 and s.plan_id in (select cast(value as integer) from json_each($2))
+         and p.merchant = $3
        order by s.period_end desc`,
-      [customer.toLowerCase(), row.plan_ids, team.merchant],
+      [customer.toLowerCase(), jsonList(row.plan_ids), team.merchant],
     );
     const nowSec = now();
     const mapped = subs.map((s) => toSubscription(s, nowSec));
@@ -202,11 +220,13 @@ export function createApi(db: Db, options: ApiOptions) {
   });
 
   app.get("/v1/features", async (c) => {
-    const rows = await db.query<{ key: string; plan_ids: string[] }>(
+    const rows = await db.query<{ key: string; plan_ids: string }>(
       "select key, plan_ids from features where team_id = $1 order by key",
       [c.get("team").id],
     );
-    return c.json({ data: rows.map((r) => ({ key: r.key, planIds: r.plan_ids.map(String) })) });
+    return c.json({
+      data: rows.map((r) => ({ key: r.key, planIds: jsonList(r.plan_ids).map(String) })),
+    });
   });
 
   /** Maps a feature key to the plans that unlock it. Plans must belong to this team's merchant. */
@@ -216,7 +236,8 @@ export function createApi(db: Db, options: ApiOptions) {
     if (!parsed.success) return c.json({ error: "Body must be { planIds: string[] }" }, 400);
 
     const owned = await db.query<{ plan_id: string }>(
-      "select plan_id from plans where plan_id = any($1::bigint[]) and merchant = $2",
+      `select plan_id from plans
+       where plan_id in (select cast(value as integer) from json_each($1)) and merchant = $2`,
       [parsed.data.planIds, team.merchant],
     );
     const ownedIds = new Set(owned.map((r) => String(r.plan_id)));
@@ -227,7 +248,7 @@ export function createApi(db: Db, options: ApiOptions) {
 
     const key = c.req.param("key");
     await db.query(
-      `insert into features (team_id, key, plan_ids) values ($1, $2, $3::bigint[])
+      `insert into features (team_id, key, plan_ids) values ($1, $2, $3)
        on conflict (team_id, key) do update set plan_ids = excluded.plan_ids`,
       [team.id, key, parsed.data.planIds],
     );
@@ -235,11 +256,13 @@ export function createApi(db: Db, options: ApiOptions) {
   });
 
   app.get("/v1/webhook-endpoints", async (c) => {
-    const rows = await db.query<{ id: string; url: string; events: string[]; active: boolean }>(
-      "select id, url, events, active from webhook_endpoints where team_id = $1 and active order by created_at",
+    const rows = await db.query<{ id: string; url: string; events: string; active: number }>(
+      "select id, url, events, active from webhook_endpoints where team_id = $1 and active order by created_at, rowid",
       [c.get("team").id],
     );
-    return c.json({ data: rows });
+    return c.json({
+      data: rows.map((r) => ({ ...r, events: jsonList(r.events), active: Boolean(r.active) })),
+    });
   });
 
   /** Registers an endpoint. The signing secret is only returned here. */

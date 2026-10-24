@@ -54,18 +54,7 @@ Hepsi 2026-10-24'te RPC üzerinden on-chain doğrulandı. Kaynak kodda tek doğr
 | EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | aynı                                         |
 | Multicall3      | `0xcA11bde05977b3631167028862bE2a173976CA11` | aynı                                         |
 
-İki ağdaki USDC de Circle FiatToken v2 (6 decimal, EIP-712 domain `USDC` / `2`) ve **EIP-3009 destekliyor**. Bu yüzden x402 `exact` şeması doğrudan `transferWithAuthorization` ile yapılacak. Solidity hedefi `0.8.30` ve `evm_version = "prague"`.
-
---------------- | --------------------------------------------------------------------------- | --------------------- |
-| Chain ID | 143 | 10143 (doğrulanacak) |
-| RPC | `https://rpc.monad.xyz` | doğrulanacak |
-| Explorer | monadvision.com, monadscan.com | doğrulanacak |
-| USDC | `0x754704Bc059F8C67012fEd69BC8A327a5aafb603` (Circle docs ile doğrulanacak) | Circle testnet adresi |
-| Permit2 | `0x000000000022d473030f116ddee9f6b43ac78ba3` | aynı (doğrulanacak) |
-| EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | aynı (doğrulanacak) |
-| Multicall3 | `0xcA11bde05977b3631167028862bE2a173976CA11` | aynı |
-
-Kodlamaya başlamadan önce testnet satırı ve USDC'nin EIP-3009 (`transferWithAuthorization`) desteği kontrol edilecek. x402 `exact` şeması buna dayanıyor.
+İki ağdaki USDC de Circle FiatToken v2 (6 decimal, EIP-712 domain `USDC` / `2`) ve **EIP-3009 destekliyor**. Bu yüzden x402 `exact` şeması doğrudan `transferWithAuthorization` ile yapılır. Solidity hedefi `0.8.28` ve `evm_version = "prague"`.
 
 ---
 
@@ -123,11 +112,11 @@ Agent tarafının tamamı burada:
 
 ## 4. Off-chain servisler
 
-> **Faz 2 durumu (2026-10-24):** hepsi tek paket olarak `apps/platform` içinde. Modüller ayrı süreç olarak da çalışıyor (`monavisa-platform api|indexer|keeper|webhooks|all`). Redis ve Drizzle kullanılmadı, ince bir SQL katmanı yeterli oldu. Testlerde süreç içi Postgres (PGlite) kullanılıyor.
+> **Faz 2 durumu (2026-10-24):** hepsi tek paket olarak `apps/platform` içinde. Modüller ayrı süreç olarak da çalışıyor (`monavisa-platform api|indexer|keeper|webhooks|all`). Redis ve Drizzle kullanılmadı, ince bir SQL katmanı yeterli oldu. Veritabanı SQLite: Cloudflare Worker'da D1, testlerde ve yerelde `node:sqlite`. Token tutarları metin olarak saklanıyor, toplamlar BigInt ile JS tarafında yapılıyor.
 
 ### 4.1 Platform API (`apps/platform/src/api.ts`)
 
-- Stack: Node.js, Hono, Postgres.
+- Stack: Node.js / Cloudflare Workers, Hono, SQLite (D1).
 - Auth: merchant için secret API key (`mv_sk_...`, yalnızca sha256 hash'i saklanır). Dashboard için SIWE Faz 3'te.
 - Uygulanan uçlar: `GET /v1/entitlements/:feature?customer=`, `GET /v1/customers/:address/subscriptions`, `GET /v1/customers/:address/invoices`, `GET/PUT /v1/features/:key`, `GET/POST/DELETE /v1/webhook-endpoints`, `GET /health`.
 - Panel uçları (Faz 3): `POST /auth/nonce`, `POST /auth/login` (SIWE, `publicClient.verifySiweMessage` ile, akıllı hesaplar dahil), `POST /auth/logout`, `GET/PATCH /v1/me`, `GET /v1/overview`, `GET /v1/plans`, `PUT /v1/plans/:id/metadata`, `GET /v1/subscriptions`, `GET /v1/invoices`, `GET/POST/DELETE /v1/payment-links`, `GET/POST/DELETE /v1/api-keys` (yalnızca oturumla). Herkese açık: `GET /public/plans/:id`, `GET /public/payment-links/:id`.
@@ -232,18 +221,18 @@ pnpm workspaces ve Turborepo. TypeScript strict. Changesets ile paket versiyonla
 
 ---
 
-## 9. Fazlar
+## 9. Fazlar ve Durum
 
-| Faz                    | İçerik                                                                                    | Bitti sayılır                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 0. İskelet             | Monorepo, Foundry, `core` paketi, ağ bilgilerinin doğrulanması                            | `pnpm build` ve `forge test` yeşil                                    |
-| 1. Abonelik çekirdeği  | `PlanFactory`, `SubscriptionRegistry`, `AutopayModule` (Permit2), `FeeCollector`, testler | Testnet'te plan oluştur, abone ol, yenile, iptal et                   |
-| 2. Platform            | API, indexer, renewal keeper, webhook'lar, `node` SDK                                     | `checkEntitlement` on-chain duruma göre doğru cevap veriyor           |
-| 3. Ön yüz              | `react` SDK, hosted checkout, payment link, dashboard                                     | Wallet bağlayıp USDC ile abonelik ve fatura uçtan uca                 |
-| 4. Agent ödemeleri     | `SessionVault` session kısmı, x402 facilitator, `agent` SDK                               | Korumalı API'ye agent 402 alıp otomatik ödüyor                        |
-| 5. Escrow ve mandate   | Escrow, mandate imza ve revocation, policy engine                                         | Hatalı teslimatta otomatik iade, iptal edilen mandate ile ödeme reddi |
-| 6. MCP ve sertleştirme | `mcp` paketi, ERC-7579 modül yolu, passkey mandate'leri, fuzz ve invariant genişletme     | Claude Desktop'tan bütçe sınırlı ödeme                                |
-| 7. Mainnet             | Harici audit, Safe ile admin, mainnet deploy, izleme                                      | Kritik ve yüksek bulgu sıfır, chain ID 143'te canlı                   |
+| Faz | İçerik | Durum | Detaylar |
+|---|---|---|---|
+| **0. İskelet** | Monorepo, Foundry, `core` paketi, ağ bilgilerinin doğrulanması | ✅ Tamamlandı | Viem entegrasyonu, Monad testnet & mainnet RPC/USDC adresleri, CI yapılandırması. |
+| **1. Abonelik çekirdeği** | `PlanFactory`, `SubscriptionRegistry`, `AutopayModule` (Permit2), `FeeCollector`, testler | ✅ Tamamlandı | Soulbound NFT, Permit2 periyodik çekim, UUPS yükseltilebilir kontratlar. |
+| **2. Platform** | API, indexer, renewal keeper, webhook'lar, `node` SDK | ✅ Tamamlandı | SQLite şeması (D1 ve node:sqlite), Hono API, webhook HMAC-SHA256 retry kuyruğu. |
+| **3. Ön yüz & Raporlama** | `react` SDK, hosted checkout, payment link, dashboard, PDF fatura & gelir grafiği | ✅ Tamamlandı | SIWE girişi, SVG 30 günlük gelir trendi, PDF fatura endpoint'i, `/features` yönetim ekranı. |
+| **4. Agent ödemeleri** | `SessionVault` session kısmı, x402 facilitator, `agent` SDK | ✅ Tamamlandı | Session açılışı/kapanışı, EIP-712 kümülatif voucher'lar, x402 v2 `/verify` ve `/settle`, `createAgentFetch`. |
+| **5. Escrow ve mandate** | Verify-Then-Settle escrow, mandate imza ve revocation, policy engine | ✅ Tamamlandı | JCS SHA-256 deliverable taahhüdü, monoton daralan MonAuth hiyerarşisi, deterministik harcama değerlendirme motoru. |
+| **6. MCP ve sertleştirme** | `@monavisa/mcp` paketi (12 tool), `Autopay7579Executor.sol`, örnekler, fuzz & invariant testleri | ✅ Tamamlandı | Stdio MCP sunucusu, ERC-7579 execution modülü, SessionVault korunum invariant testleri, `examples/`. |
+| **7. Mainnet Hazırlığı** | Harici audit kapsamı, deployment checklist'i, operasyonel izleme ve runbook'lar | ✅ Tamamlandı | `docs/AUDIT_SCOPE.md`, `docs/MAINNET_CHECKLIST.md`, `docs/MONITORING.md`. |
 
 ---
 

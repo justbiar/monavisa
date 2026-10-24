@@ -13,6 +13,7 @@ import { signMessage } from "wagmi/actions";
 import { fetchNonce, type Team, useSession } from "./api.js";
 import { chain } from "./config.js";
 import { short } from "./format.js";
+import { Features } from "./pages/Features.js";
 import { Links } from "./pages/Links.js";
 import { Overview } from "./pages/Overview.js";
 import { Payments } from "./pages/Payments.js";
@@ -68,6 +69,7 @@ function Shell() {
         {page === "subscribers" && <Subscribers />}
         {page === "payments" && <Payments />}
         {page === "links" && <Links />}
+        {page === "features" && <Features />}
         {page === "settings" && <Settings />}
       </main>
     </>

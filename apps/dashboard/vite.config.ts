@@ -18,6 +18,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: { __LOCAL_DEPLOYMENT__: JSON.stringify(local) },
-    server: { port: 5174 },
+    server: {
+      port: 5174,
+      allowedHosts: true,
+      proxy: {
+        "/v1": { target: "http://127.0.0.1:8787", changeOrigin: true },
+        "/auth": { target: "http://127.0.0.1:8787", changeOrigin: true },
+        "/health": { target: "http://127.0.0.1:8787", changeOrigin: true },
+        "/public": { target: "http://127.0.0.1:8787", changeOrigin: true },
+        "/x402": { target: "http://127.0.0.1:8787", changeOrigin: true },
+      },
+    },
   };
 });

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "monavisa": {
+      "command": "npx",
+      "args": ["-y", "@monavisa/mcp"],
+      "env": {
+        "MONAD_RPC_URL": "https://testnet-rpc.monad.xyz",
+        "MONAD_CHAIN_ID": "10143",
+        "PRIVATE_KEY": "0x...",
+        "SESSION_VAULT_ADDRESS": "0x...",
+        "USDC_ADDRESS": "0xf817257fed379853cDe0fa4F97AB987181B1E5Ea",
+        "PLATFORM_URL": "https://platform.monavisa.io"
+      }
+    }
+  }
+}

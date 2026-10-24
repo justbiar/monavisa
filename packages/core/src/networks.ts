@@ -72,7 +72,13 @@ export const networks: Record<SupportedChainId, Network> = {
     permit2: PERMIT2,
     entryPointV07: ENTRYPOINT_V07,
     multicall3: MULTICALL3,
-    contracts: NOT_DEPLOYED,
+    contracts: {
+      planFactory: "0xAB58722C88804461aeb3bf6ba19Db2A9591F0D07",
+      subscriptionRegistry: "0x8e01FF28C628B975bd04e94C6F3441aC8B742D0a",
+      autopayModule: "0x50F1dF3adF823676e1f7B6F0c1bD8da547d6291c",
+      feeCollector: "0x9fFeb1C740357e1B890C2f68B76FEc86DD0aBBfe",
+      sessionVault: "0x9B9EDD27487122E89E972968e2A8e89dC15CCe9d",
+    },
   },
 };
 

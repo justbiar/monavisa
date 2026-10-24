@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "monavisa-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // One round of indexer, webhooks, keeper and settler per minute.
+  "triggers": { "crons": ["* * * * *"] },
+  "observability": { "enabled": true },
+  // Migrations run from the Worker itself on first use, see migrate() in src/db.ts.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "monavisa", "database_id": "b4a7b543-0ad3-45d6-980a-4ee1f0d06351" }
+  ],
+  // KEEPER_PRIVATE_KEY and FACILITATOR_PRIVATE_KEY are optional secrets.
+  "vars": {
+    "CHAIN_ID": "10143",
+    "RPC_URL": "https://testnet-rpc.monad.xyz",
+    "START_BLOCK": "73808372",
+    "LOG_RANGE": "100",
+    "BLOCK_TAG": "latest",
+    "CORS_ORIGINS": "https://monavisa-dashboard.selfbiar.workers.dev,https://monavisa-checkout.selfbiar.workers.dev",
+    "SIWE_DOMAINS": "monavisa-dashboard.selfbiar.workers.dev",
+    "CHECKOUT_URL": "https://monavisa-checkout.selfbiar.workers.dev"
+  }
+}

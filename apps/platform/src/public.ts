@@ -4,7 +4,7 @@ import type { Db } from "./db.js";
 interface PublicPlanRow {
   plan_id: string;
   merchant: string;
-  active: boolean;
+  active: number | boolean;
   name: string | null;
   description: string | null;
   merchant_name: string | null;
@@ -22,7 +22,7 @@ const toPublicPlan = (r: PublicPlanRow) => ({
   merchantName: r.merchant_name,
   name: r.name,
   description: r.description,
-  active: r.active,
+  active: Boolean(r.active),
 });
 
 /**

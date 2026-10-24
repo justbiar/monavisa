@@ -4,12 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { parseEventLogs, parseUnits } from "viem";
 import { useConfig, useConnection } from "wagmi";
-import { waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { useSession } from "../api.js";
 import { checkoutUrl, settlementToken } from "../config.js";
 import { copy, daysTr, periodTr, USDC_DECIMALS, usdc } from "../format.js";
 import { type Team } from "../api.js";
 import { type DashboardPlan, planLabel } from "../types.js";
+import { errorText, sendContractTx } from "../tx.js";
 import { WalletRequired } from "../wallet.js";
 
 const DAY = 24 * 60 * 60;
@@ -18,11 +18,6 @@ const PERIODS = [
   { value: 365 * DAY, label: "Yıllık" },
   { value: 7 * DAY, label: "Haftalık" },
 ];
-
-const errorText = (err: unknown) => {
-  const e = err as { shortMessage?: string; message?: string };
-  return e.shortMessage ?? e.message ?? String(err);
-};
 
 export function Plans() {
   const { api } = useSession();
@@ -107,14 +102,12 @@ function PlanRow({ plan, canSign }: { plan: DashboardPlan; canSign: boolean }) {
     setBusy("active");
     setError(null);
     try {
-      const hash = await writeContract(config, {
+      await sendContractTx(config, chainId, {
         address: addresses.planFactory,
         abi: planFactoryAbi,
         functionName: "setPlanActive",
         args: [BigInt(plan.id), !plan.active],
-        chainId,
       });
-      await waitForTransactionReceipt(config, { hash, chainId });
       await queryClient.invalidateQueries({ queryKey: ["plans"] });
     } catch (err) {
       setError(errorText(err));
@@ -222,7 +215,7 @@ function CreatePlan({ onCreated }: { onCreated: (planId: string) => void }) {
   const [period, setPeriod] = useState(PERIODS[0]!.value);
   const [trialDays, setTrialDays] = useState("0");
   const [graceDays, setGraceDays] = useState("3");
-  const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState<"idle" | "signing" | "confirming" | "saving">("idle");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
@@ -232,27 +225,30 @@ function CreatePlan({ onCreated }: { onCreated: (planId: string) => void }) {
       setError("Plan oluşturmak için satıcı cüzdanını bağla.");
       return;
     }
-    setBusy(true);
+    setStep("signing");
     setError(null);
     setDone(null);
     try {
       const amount = parseUnits(price.replace(",", "."), USDC_DECIMALS);
       if (amount <= 0n) throw new Error("Fiyat sıfırdan büyük olmalı");
-      const hash = await writeContract(config, {
-        address: addresses.planFactory,
-        abi: planFactoryAbi,
-        functionName: "createPlan",
-        args: [
-          settlementToken,
-          amount,
-          period,
-          Number(trialDays || 0) * DAY,
-          Number(graceDays || 0) * DAY,
-          connection.address,
-        ],
+      const receipt = await sendContractTx(
+        config,
         chainId,
-      });
-      const receipt = await waitForTransactionReceipt(config, { hash, chainId });
+        {
+          address: addresses.planFactory,
+          abi: planFactoryAbi,
+          functionName: "createPlan",
+          args: [
+            settlementToken,
+            amount,
+            period,
+            Number(trialDays || 0) * DAY,
+            Number(graceDays || 0) * DAY,
+            connection.address,
+          ],
+        },
+        () => setStep("confirming"),
+      );
       const [created] = parseEventLogs({
         abi: planFactoryAbi,
         eventName: "PlanCreated",
@@ -260,7 +256,12 @@ function CreatePlan({ onCreated }: { onCreated: (planId: string) => void }) {
       });
       if (!created) throw new Error("Plan oluşturma olayı makbuzda yok");
       const planId = created.args.planId.toString();
-      await api(`/v1/plans/${planId}/metadata`, { method: "PUT", body: { name: name.trim() } });
+      setStep("saving");
+      try {
+        await api(`/v1/plans/${planId}/metadata`, { method: "PUT", body: { name: name.trim() } });
+      } catch (err) {
+        console.warn("Could not save plan metadata immediately:", err);
+      }
       onCreated(planId);
       setDone(planId);
       setName("");
@@ -268,7 +269,7 @@ function CreatePlan({ onCreated }: { onCreated: (planId: string) => void }) {
     } catch (err) {
       setError(errorText(err));
     } finally {
-      setBusy(false);
+      setStep("idle");
     }
   };
 
@@ -345,8 +346,14 @@ function CreatePlan({ onCreated }: { onCreated: (planId: string) => void }) {
       {done && <div className="notice ok">Plan #{done} oluşturuldu.</div>}
       {error && <div className="notice error">{error}</div>}
       <WalletRequired>
-        <button type="submit" className="btn primary big" disabled={busy}>
-          {busy ? "Cüzdanında onayla…" : "Planı zincirde oluştur"}
+        <button type="submit" className="btn primary big" disabled={step !== "idle"}>
+          {step === "signing"
+            ? "Cüzdanında onayla…"
+            : step === "confirming"
+              ? "Zincirde onaylanıyor…"
+              : step === "saving"
+                ? "Kaydediliyor…"
+                : "Planı zincirde oluştur"}
         </button>
       </WalletRequired>
     </form>

@@ -37,6 +37,7 @@ contract DeployLocal is Script {
         vm.serializeAddress(key, "planFactory", address(d.planFactory));
         vm.serializeAddress(key, "subscriptionRegistry", address(d.registry));
         vm.serializeAddress(key, "feeCollector", address(d.feeCollector));
+        vm.serializeAddress(key, "sessionVault", address(d.sessionVault));
         string memory json = vm.serializeAddress(key, "autopayModule", address(d.autopay));
         vm.writeJson(json, "./deployments/local.json");
     }

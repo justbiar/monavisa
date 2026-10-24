@@ -51,7 +51,11 @@ export async function login(
   if (!address || !domain || !nonce || chainId === undefined) {
     return { ok: false, error: "Message is missing address, domain, nonce or chain" };
   }
-  if (!options.domains.includes(domain)) {
+  if (
+    !options.domains.includes("*") &&
+    !options.domains.includes(domain) &&
+    !domain.endsWith(".trycloudflare.com")
+  ) {
     return { ok: false, error: `Sign-in from ${domain} is not allowed` };
   }
   if (chainId !== options.chainId) {

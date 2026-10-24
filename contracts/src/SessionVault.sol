@@ -44,10 +44,35 @@ contract SessionVault is
         address token;
     }
 
+    enum EscrowStatus {
+        None,
+        Reserved,
+        Committed,
+        Settled,
+        Refunded
+    }
+
+    /// @dev Four storage slots for escrow state.
+    struct Escrow {
+        bytes32 sessionId;
+        address provider;
+        uint96 amount;
+        uint40 deadline;
+        EscrowStatus status;
+        bytes32 commitment;
+    }
+
     bytes32 public constant VOUCHER_TYPEHASH =
         keccak256("Voucher(bytes32 sessionId,address payee,uint256 cumulativeAmount)");
+    bytes32 public constant RESERVE_TYPEHASH = keccak256(
+        "Reserve(bytes32 sessionId,address provider,uint96 amount,uint40 deadline,bytes32 nonce)"
+    );
+    bytes32 public constant CONFIRM_TYPEHASH = keccak256("Confirm(bytes32 escrowId)");
+
     uint32 public constant MIN_CLOSE_DELAY = 5 minutes;
     uint32 public constant MAX_CLOSE_DELAY = 7 days;
+    /// @notice Longest a session may stay open, so funds are never locked indefinitely.
+    uint32 public constant MAX_SESSION_DURATION = 365 days;
 
     IPlanFactory public planFactory;
     FeeCollector public feeCollector;
@@ -59,6 +84,10 @@ contract SessionVault is
     mapping(bytes32 sessionId => mapping(address payee => uint256)) public redeemed;
     mapping(address owner => uint256) public sessionCount;
 
+    mapping(bytes32 escrowId => Escrow) private _escrows;
+    mapping(bytes32 sessionId => mapping(bytes32 nonce => bool)) public usedNonces;
+    mapping(address issuer => mapping(bytes32 mandateHash => bool)) public isMandateRevoked;
+
     event SessionOpened(
         bytes32 indexed sessionId,
         address indexed owner,
@@ -68,6 +97,7 @@ contract SessionVault is
         uint40 expiresAt
     );
     event SessionToppedUp(bytes32 indexed sessionId, address indexed from, uint256 amount);
+    event SessionExtended(bytes32 indexed sessionId, uint40 expiresAt);
     event VoucherRedeemed(
         bytes32 indexed sessionId,
         address indexed payee,
@@ -79,6 +109,18 @@ contract SessionVault is
     event SessionClosed(bytes32 indexed sessionId, uint256 refunded);
     event CloseDelaySet(uint32 closeDelay);
 
+    event EscrowReserved(
+        bytes32 indexed escrowId,
+        bytes32 indexed sessionId,
+        address indexed provider,
+        uint96 amount,
+        uint40 deadline
+    );
+    event EscrowCommitted(bytes32 indexed escrowId, bytes32 commitment);
+    event EscrowSettled(bytes32 indexed escrowId, uint256 amount, uint256 fee);
+    event EscrowRefunded(bytes32 indexed escrowId, uint256 amount);
+    event MandateRevoked(address indexed issuer, bytes32 indexed mandateHash);
+
     error TokenNotAllowed(address token);
     error InvalidSigner();
     error InvalidAmount();
@@ -86,11 +128,24 @@ contract SessionVault is
     error SessionNotFound(bytes32 sessionId);
     error NotSessionOwner(bytes32 sessionId, address caller);
     error SessionClosing(bytes32 sessionId);
+    error SessionExpired(bytes32 sessionId);
     error RedemptionWindowOver(bytes32 sessionId);
     error InvalidVoucherSignature();
     error NothingToRedeem();
     error StillRedeemable(bytes32 sessionId, uint256 until);
     error InvalidCloseDelay(uint32 closeDelay);
+
+    error EscrowNotFound(bytes32 escrowId);
+    error EscrowAlreadyExists(bytes32 escrowId);
+    error EscrowNotActive(bytes32 escrowId);
+    error EscrowDeadlinePassed(bytes32 escrowId);
+    error EscrowDeadlineNotPassed(bytes32 escrowId);
+    error NotEscrowProvider(bytes32 escrowId, address caller);
+    error InvalidCommitment();
+    error NonceAlreadyUsed(bytes32 sessionId, bytes32 nonce);
+    error InvalidReservationSignature();
+    error InvalidConfirmationSignature();
+    error InsufficientSessionBalance(bytes32 sessionId, uint256 requested, uint256 balance);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -126,7 +181,9 @@ contract SessionVault is
         if (!planFactory.allowedToken(token)) revert TokenNotAllowed(token);
         if (signer == address(0)) revert InvalidSigner();
         if (amount == 0) revert InvalidAmount();
-        if (expiresAt <= block.timestamp) revert InvalidExpiry();
+        if (expiresAt <= block.timestamp || expiresAt > block.timestamp + MAX_SESSION_DURATION) {
+            revert InvalidExpiry();
+        }
 
         sessionId = keccak256(abi.encode(msg.sender, ++sessionCount[msg.sender]));
         _sessions[sessionId] = Session({
@@ -141,14 +198,26 @@ contract SessionVault is
         emit SessionOpened(sessionId, msg.sender, signer, token, amount, expiresAt);
     }
 
-    /// @notice Adds funds to an open session. Anyone may top up.
+    /// @notice Adds funds to an open, unexpired session. Anyone may top up.
     function topUp(bytes32 sessionId, uint96 amount) external nonReentrant {
         Session storage s = _get(sessionId);
         if (amount == 0) revert InvalidAmount();
-        if (s.closesAt != 0) revert SessionClosing(sessionId);
+        _requireOpen(sessionId, s);
         s.balance += amount;
         IERC20(s.token).safeTransferFrom(msg.sender, address(this), amount);
         emit SessionToppedUp(sessionId, msg.sender, amount);
+    }
+
+    /// @notice Moves the expiry of an open session later. Never shortens it, so accepted vouchers
+    ///         keep at least the redemption window they were given.
+    function extendSession(bytes32 sessionId, uint40 expiresAt) external {
+        Session storage s = _owned(sessionId);
+        _requireOpen(sessionId, s);
+        if (expiresAt <= s.expiresAt || expiresAt > block.timestamp + MAX_SESSION_DURATION) {
+            revert InvalidExpiry();
+        }
+        s.expiresAt = expiresAt;
+        emit SessionExtended(sessionId, expiresAt);
     }
 
     /// @notice Starts the close delay. No new vouchers should be accepted after this.
@@ -227,6 +296,155 @@ contract SessionVault is
         );
     }
 
+    // ------------------------------------------------------------------ mandate revocation
+
+    /// @notice Revokes a mandate on-chain by hash.
+    function revokeMandate(bytes32 mandateHash) external {
+        isMandateRevoked[msg.sender][mandateHash] = true;
+        emit MandateRevoked(msg.sender, mandateHash);
+    }
+
+    // ------------------------------------------------------------------ escrow (Verify-Then-Settle)
+
+    /// @notice Reserves an amount from an open session for escrow. Callable directly by session owner/signer,
+    ///         or by any relayer with a valid signature from session signer.
+    function reserve(
+        bytes32 sessionId,
+        address provider,
+        uint96 amount,
+        uint40 deadline,
+        bytes32 nonce,
+        bytes calldata signature
+    ) external nonReentrant returns (bytes32 escrowId) {
+        if (provider == address(0)) revert InvalidSigner();
+        if (amount == 0) revert InvalidAmount();
+        Session storage s = _get(sessionId);
+        _requireOpen(sessionId, s);
+        if (deadline <= block.timestamp || deadline > s.expiresAt) revert InvalidExpiry();
+        if (usedNonces[sessionId][nonce]) revert NonceAlreadyUsed(sessionId, nonce);
+        if (amount > s.balance) revert InsufficientSessionBalance(sessionId, amount, s.balance);
+
+        if (msg.sender != s.signer && msg.sender != s.owner) {
+            bytes32 digest = reserveDigest(sessionId, provider, amount, deadline, nonce);
+            if (!SignatureChecker.isValidSignatureNow(s.signer, digest, signature)) {
+                revert InvalidReservationSignature();
+            }
+        }
+
+        usedNonces[sessionId][nonce] = true;
+        s.balance -= amount;
+
+        escrowId = keccak256(abi.encode(sessionId, provider, nonce));
+        if (_escrows[escrowId].status != EscrowStatus.None) revert EscrowAlreadyExists(escrowId);
+
+        _escrows[escrowId] = Escrow({
+            sessionId: sessionId,
+            provider: provider,
+            amount: amount,
+            deadline: deadline,
+            status: EscrowStatus.Reserved,
+            commitment: bytes32(0)
+        });
+
+        emit EscrowReserved(escrowId, sessionId, provider, amount, deadline);
+    }
+
+    /// @notice Provider commits hash of delivery payload (C = SHA-256(canonical(data))).
+    function commit(bytes32 escrowId, bytes32 commitment) external {
+        if (commitment == bytes32(0)) revert InvalidCommitment();
+        Escrow storage e = _getEscrow(escrowId);
+        if (msg.sender != e.provider) revert NotEscrowProvider(escrowId, msg.sender);
+        if (e.status != EscrowStatus.Reserved) revert EscrowNotActive(escrowId);
+        if (block.timestamp >= e.deadline) revert EscrowDeadlinePassed(escrowId);
+
+        e.commitment = commitment;
+        e.status = EscrowStatus.Committed;
+        emit EscrowCommitted(escrowId, commitment);
+    }
+
+    /// @notice Recipient confirms delivery and pays the provider (minus protocol fee).
+    ///         Callable directly by session owner/signer, or by anyone with signer's confirmation.
+    function confirm(bytes32 escrowId, bytes calldata signature)
+        external
+        nonReentrant
+        returns (uint256 paid)
+    {
+        Escrow storage e = _getEscrow(escrowId);
+        if (e.status != EscrowStatus.Reserved && e.status != EscrowStatus.Committed) {
+            revert EscrowNotActive(escrowId);
+        }
+        if (block.timestamp >= e.deadline) revert EscrowDeadlinePassed(escrowId);
+
+        Session storage s = _get(e.sessionId);
+        if (msg.sender != s.signer && msg.sender != s.owner) {
+            bytes32 digest = confirmDigest(escrowId);
+            if (!SignatureChecker.isValidSignatureNow(s.signer, digest, signature)) {
+                revert InvalidConfirmationSignature();
+            }
+        }
+
+        e.status = EscrowStatus.Settled;
+        paid = e.amount;
+
+        uint256 fee = feeCollector.computeFee(paid, feeCollector.agentFeeBps());
+        IERC20 token = IERC20(s.token);
+        token.safeTransfer(e.provider, paid - fee);
+        if (fee > 0) {
+            token.safeTransfer(address(feeCollector), fee);
+            feeCollector.notifyFee(address(token), fee);
+        }
+
+        emit EscrowSettled(escrowId, paid, fee);
+    }
+
+    /// @notice Returns reserved funds to the session (or owner if closed) if deadline expired without confirmation.
+    function refund(bytes32 escrowId) external nonReentrant returns (uint256 amount) {
+        Escrow storage e = _getEscrow(escrowId);
+        if (e.status != EscrowStatus.Reserved && e.status != EscrowStatus.Committed) {
+            revert EscrowNotActive(escrowId);
+        }
+        if (block.timestamp < e.deadline) revert EscrowDeadlineNotPassed(escrowId);
+
+        e.status = EscrowStatus.Refunded;
+        amount = e.amount;
+
+        Session storage s = _get(e.sessionId);
+        if (block.timestamp < redemptionDeadline(e.sessionId)) {
+            s.balance += uint96(amount);
+        } else {
+            IERC20(s.token).safeTransfer(s.owner, amount);
+        }
+
+        emit EscrowRefunded(escrowId, amount);
+    }
+
+    // ------------------------------------------------------------------ escrow views
+
+    function getEscrow(bytes32 escrowId) external view returns (Escrow memory) {
+        return _escrows[escrowId];
+    }
+
+    function reserveDigest(
+        bytes32 sessionId,
+        address provider,
+        uint96 amount,
+        uint40 deadline,
+        bytes32 nonce
+    ) public view returns (bytes32) {
+        return _hashTypedDataV4(
+            keccak256(abi.encode(RESERVE_TYPEHASH, sessionId, provider, amount, deadline, nonce))
+        );
+    }
+
+    function confirmDigest(bytes32 escrowId) public view returns (bytes32) {
+        return _hashTypedDataV4(keccak256(abi.encode(CONFIRM_TYPEHASH, escrowId)));
+    }
+
+    function _getEscrow(bytes32 escrowId) private view returns (Escrow storage e) {
+        e = _escrows[escrowId];
+        if (e.status == EscrowStatus.None) revert EscrowNotFound(escrowId);
+    }
+
     // ------------------------------------------------------------------ internal
 
     function _redeem(
@@ -271,6 +489,12 @@ contract SessionVault is
     function _owned(bytes32 sessionId) private view returns (Session storage s) {
         s = _get(sessionId);
         if (s.owner != msg.sender) revert NotSessionOwner(sessionId, msg.sender);
+    }
+
+    /// @dev Open means no close was requested and the session has not expired.
+    function _requireOpen(bytes32 sessionId, Session storage s) private view {
+        if (s.closesAt != 0) revert SessionClosing(sessionId);
+        if (block.timestamp >= s.expiresAt) revert SessionExpired(sessionId);
     }
 
     function _setCloseDelay(uint32 closeDelay_) private {

@@ -51,7 +51,8 @@ export async function runKeeperOnce(
   await publicClient.waitForTransactionReceipt({ hash });
 
   await db.query(
-    "update subscriptions set last_keeper_attempt = $1 where sub_id = any($2::bigint[])",
+    `update subscriptions set last_keeper_attempt = $1
+     where sub_id in (select cast(value as integer) from json_each($2))`,
     [nowSec, subIds.map(String)],
   );
   return { hash, subIds };

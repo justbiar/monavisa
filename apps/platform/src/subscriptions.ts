@@ -8,7 +8,7 @@ export interface SubscriptionRow {
   period_start: string;
   period_end: string;
   status: number;
-  in_trial: boolean;
+  in_trial: number | boolean;
   grace_period: number;
 }
 
@@ -27,7 +27,7 @@ export function toSubscription(row: SubscriptionRow, nowSec: number) {
     status: subscriptionStatusName(status),
     currentPeriodStart: Number(row.period_start),
     currentPeriodEnd: Number(row.period_end),
-    inTrial: row.in_trial,
+    inTrial: Boolean(row.in_trial),
     entitled: isEntitled(
       {
         status,

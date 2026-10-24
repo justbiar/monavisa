@@ -8,23 +8,25 @@ const TIMEOUT_MS = 10_000;
 
 /** Creates one pending delivery per matching endpoint for every new event. */
 export async function fanOutEvents(db: Db, nowSec: number): Promise<number> {
-  return db.tx(async (tx) => {
-    const events = await tx.query<{ id: string; type: string; merchant: string }>(
-      "select id, type, merchant from events where not fanned_out order by created_at limit 200",
-    );
-    for (const event of events) {
-      await tx.query(
-        `insert into webhook_deliveries (endpoint_id, event_id, next_attempt_at)
-         select e.id, $1, $2
-         from webhook_endpoints e join teams t on t.id = e.team_id
-         where e.active and t.merchant = $3 and ($4 = any(e.events) or '*' = any(e.events))
-         on conflict (endpoint_id, event_id) do nothing`,
-        [event.id, nowSec, event.merchant, event.type],
-      );
-      await tx.query("update events set fanned_out = true where id = $1", [event.id]);
-    }
-    return events.length;
-  });
+  const events = await db.query<{ id: string; type: string; merchant: string }>(
+    "select id, type, merchant from events where fanned_out = 0 order by created_at limit 200",
+  );
+  // Both writes are idempotent, so a crash between them only repeats the fan-out.
+  for (const event of events) {
+    await db.batch([
+      {
+        sql: `insert into webhook_deliveries (endpoint_id, event_id, next_attempt_at)
+              select e.id, $1, $2
+              from webhook_endpoints e join teams t on t.id = e.team_id
+              where e.active and t.merchant = $3
+                and exists (select 1 from json_each(e.events) where value in ($4, '*'))
+              on conflict (endpoint_id, event_id) do nothing`,
+        params: [event.id, nowSec, event.merchant, event.type],
+      },
+      { sql: "update events set fanned_out = 1 where id = $1", params: [event.id] },
+    ]);
+  }
+  return events.length;
 }
 
 export function retryDelaySec(attempts: number): number {

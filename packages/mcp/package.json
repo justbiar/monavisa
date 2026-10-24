@@ -1,0 +1,34 @@
+{
+  "name": "@monavisa/mcp",
+  "version": "0.0.0",
+  "description": "Model Context Protocol (MCP) server for Mona Visa: sessions, x402 payments, escrows and mandates",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "monavisa-mcp": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "@monavisa/agent": "workspace:*",
+    "@monavisa/core": "workspace:*",
+    "viem": "2.57.4",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "vitest": "5.0.3"
+  }
+}

@@ -8,6 +8,8 @@ export {
   type WebhookEventType,
 } from "@monavisa/core";
 
+export * from "./x402.js";
+
 import type { SubscriptionStatusName } from "@monavisa/core";
 
 export const DEFAULT_BASE_URL = "http://localhost:8787";

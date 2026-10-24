@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { Db } from "./db.js";
+import { type Db, NOW_SQL } from "./db.js";
 
 export interface Team {
   id: string;
@@ -91,7 +91,7 @@ export async function listApiKeys(db: Db, teamId: string): Promise<ApiKeySummary
     created_at: Date | string;
     revoked_at: Date | string | null;
   }>(
-    "select id, label, prefix, created_at, revoked_at from api_keys where team_id = $1 order by created_at",
+    "select id, label, prefix, created_at, revoked_at from api_keys where team_id = $1 order by created_at, rowid",
     [teamId],
   );
   const iso = (v: Date | string) => new Date(v).toISOString();
@@ -107,7 +107,8 @@ export async function listApiKeys(db: Db, teamId: string): Promise<ApiKeySummary
 /** Revokes a key immediately. Returns false when the key is unknown or already revoked. */
 export async function revokeApiKey(db: Db, teamId: string, keyId: string): Promise<boolean> {
   const rows = await db.query(
-    "update api_keys set revoked_at = now() where id = $1 and team_id = $2 and revoked_at is null returning id",
+    `update api_keys set revoked_at = ${NOW_SQL}
+     where id = $1 and team_id = $2 and revoked_at is null returning id`,
     [keyId, teamId],
   );
   return rows.length > 0;

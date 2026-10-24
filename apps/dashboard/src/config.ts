@@ -25,11 +25,11 @@ export const addressOverrides: Partial<MonaVisaAddresses> | undefined = local
 /** The settlement token new plans are priced in. */
 export const settlementToken: Address = local?.usdc ?? getNetwork(chainId).usdc.address;
 
-export const apiUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8787").replace(/\/$/, "");
-export const checkoutUrl = (import.meta.env.VITE_CHECKOUT_URL ?? "http://localhost:5173").replace(
-  /\/$/,
-  "",
-);
+export const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+export const checkoutUrl = (
+  import.meta.env.VITE_CHECKOUT_URL ??
+  "https://monavisa-checkout.selfbiar.workers.dev"
+).replace(/\/$/, "");
 
 const devAccount = import.meta.env.VITE_DEV_ACCOUNT;
 

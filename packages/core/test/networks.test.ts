@@ -90,7 +90,9 @@ describe("networks", () => {
     expect(() => getChain(1)).toThrow(UnsupportedChainError);
   });
 
-  it("throws for contracts that are not deployed yet", () => {
-    expect(() => getContractAddress(MONAD_TESTNET_CHAIN_ID, "planFactory")).toThrow(/not deployed/);
+  it("returns deployed contract addresses", () => {
+    expect(getContractAddress(MONAD_TESTNET_CHAIN_ID, "planFactory")).toBe(
+      networks[MONAD_TESTNET_CHAIN_ID].contracts.planFactory,
+    );
   });
 });

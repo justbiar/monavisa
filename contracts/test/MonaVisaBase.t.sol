@@ -6,6 +6,7 @@ import {DeployMonaVisa} from "../script/DeployMonaVisa.s.sol";
 import {AutopayModule} from "../src/AutopayModule.sol";
 import {FeeCollector} from "../src/FeeCollector.sol";
 import {PlanFactory} from "../src/PlanFactory.sol";
+import {SessionVault} from "../src/SessionVault.sol";
 import {SubscriptionRegistry} from "../src/SubscriptionRegistry.sol";
 import {IAllowanceTransfer} from "../src/interfaces/IAllowanceTransfer.sol";
 import {MockPermit2} from "./mocks/MockPermit2.sol";
@@ -32,6 +33,7 @@ abstract contract MonaVisaBase is Test {
     PlanFactory internal plans;
     SubscriptionRegistry internal registry;
     AutopayModule internal autopay;
+    SessionVault internal vault;
 
     function setUp() public virtual {
         vm.warp(1_760_000_000);
@@ -54,6 +56,7 @@ abstract contract MonaVisaBase is Test {
         plans = d.planFactory;
         registry = d.registry;
         autopay = d.autopay;
+        vault = d.sessionVault;
 
         _fundAndApprove(alice, 1000e6);
     }

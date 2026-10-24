@@ -18,6 +18,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: { __LOCAL_DEPLOYMENT__: JSON.stringify(local) },
-    server: { port: 5173 },
+    server: {
+      port: 5173,
+      allowedHosts: true,
+      proxy: {
+        "/public": "http://localhost:8787",
+      },
+    },
   };
 });
