@@ -1,0 +1,24 @@
+{
+  "name": "moncart",
+  "private": true,
+  "description": "Non-custodial subscriptions, entitlements and agent payments on Monad",
+  "packageManager": "pnpm@10.31.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "contracts:build": "forge build --root contracts",
+    "contracts:test": "forge test --root contracts"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "prettier": "3.9.9",
+    "turbo": "2.11.7",
+    "typescript": "7.0.2"
+  }
+}
