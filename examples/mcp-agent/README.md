@@ -17,7 +17,7 @@ Add the configuration in `claude_desktop_config.json` to your Claude Desktop con
 | `PRIVATE_KEY` | Hex private key for the agent wallet |
 | `SESSION_VAULT_ADDRESS` | Deployed `SessionVault` address |
 | `USDC_ADDRESS` | Deployed or canonical Monad USDC token address |
-| `PLATFORM_URL` | Mona Visa platform API (default: `https://platform.monavisa.io`) |
+| `PLATFORM_URL` | Mona Visa platform API: `https://monavisa-api.selfbiar.workers.dev` (testnet) or `https://monavisa-api-mainnet.selfbiar.workers.dev` (mainnet) |
 
 ## 3. Available Tools
 

@@ -10,7 +10,7 @@ import {
   useSubscription,
 } from "@monavisa/react";
 import { useQuery } from "@tanstack/react-query";
-import { type FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useBlockNumber,
   useConnect,
@@ -19,6 +19,7 @@ import {
   useDisconnect,
   useSwitchChain,
 } from "wagmi";
+import { Home } from "./Home.js";
 import { apiUrl, chain, explorerTxUrl, isMainnet, networkName, otherNetworkUrl } from "./config.js";
 
 interface Route {
@@ -131,7 +132,7 @@ export function App() {
       </header>
       <LiveStrip />
       <div className="wrap page">
-        {route.planId === null && route.linkId === null ? <Landing /> : <Resolved route={route} />}
+        {route.planId === null && route.linkId === null ? <Home /> : <Resolved route={route} />}
         <footer className="foot">
           Ödeme doğrudan satıcının cüzdanına gider. Mona Visa paranı hiçbir zaman tutmaz.
         </footer>
@@ -165,41 +166,6 @@ function LiveStrip() {
         </span>
       </div>
     </div>
-  );
-}
-
-function Landing() {
-  const [value, setValue] = useState("");
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const input = value.trim();
-    const link = input.match(/\/l\/([A-Za-z0-9_-]{4,32})\/?$/)?.[1];
-    if (link) {
-      window.location.href = `/l/${link}`;
-      return;
-    }
-    const id = input.match(/(\d+)\s*$/)?.[1];
-    if (id) window.location.href = `/plan/${id}`;
-  };
-  return (
-    <main className="landing">
-      <h1>Abonelik bağlantısını aç</h1>
-      <p>Satıcının paylaştığı bağlantıyı ya da plan numarasını gir.</p>
-      <form onSubmit={submit} className="landing-form">
-        <label htmlFor="plan">Plan bağlantısı veya numarası</label>
-        <div className="row">
-          <input
-            id="plan"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="https://pay.monavisa.xyz/plan/1"
-          />
-          <button type="submit" className="btn primary">
-            Aç
-          </button>
-        </div>
-      </form>
-    </main>
   );
 }
 

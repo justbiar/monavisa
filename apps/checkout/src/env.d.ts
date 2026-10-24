@@ -16,6 +16,10 @@ interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
   /** Adds a "Dev wallet" connector for this unlocked anvil account. Never set in production. */
   readonly VITE_DEV_ACCOUNT?: string;
+  /** The merchant dashboard on the same network, linked from the homepage. */
+  readonly VITE_DASHBOARD_URL?: string;
+  /** A live plan to try, linked from the homepage. Defaults to /plan/1. */
+  readonly VITE_DEMO_PLAN_URL?: string;
   /** The same site on the other Monad network, linked from the network strip. */
   readonly VITE_OTHER_NETWORK_URL?: string;
 }

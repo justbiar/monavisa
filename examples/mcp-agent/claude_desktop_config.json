@@ -7,9 +7,9 @@
         "MONAD_RPC_URL": "https://testnet-rpc.monad.xyz",
         "MONAD_CHAIN_ID": "10143",
         "PRIVATE_KEY": "0x...",
-        "SESSION_VAULT_ADDRESS": "0x...",
-        "USDC_ADDRESS": "0xf817257fed379853cDe0fa4F97AB987181B1E5Ea",
-        "PLATFORM_URL": "https://platform.monavisa.io"
+        "SESSION_VAULT_ADDRESS": "0x9B9EDD27487122E89E972968e2A8e89dC15CCe9d",
+        "USDC_ADDRESS": "0x534b2f3A21130d7a60830c2Df862319e593943A3",
+        "PLATFORM_URL": "https://monavisa-api.selfbiar.workers.dev"
       }
     }
   }

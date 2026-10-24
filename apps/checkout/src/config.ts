@@ -36,6 +36,10 @@ const devAccount = import.meta.env.VITE_DEV_ACCOUNT;
 /** Platform API for display data. Amounts never come from here; they are read from the chain. */
 export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || null;
 
+export const dashboardUrl = import.meta.env.VITE_DASHBOARD_URL?.replace(/\/$/, "") || null;
+export const demoPlanUrl = import.meta.env.VITE_DEMO_PLAN_URL || "/plan/1";
+export const repoUrl = "https://github.com/justbiar/monavisa";
+
 export const wagmiConfig = createConfig({
   chains: [chain],
   connectors: [
