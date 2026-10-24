@@ -1,0 +1,1654 @@
+<title>MonCart Hamam Pitch</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap"
+/>
+<style>
+  /* Layout: one 16:9 "midnight hamam" stage on wet tiles, transport bar and prompter below it, the shooting script as a table underneath. Single committed dark look. */
+  :root {
+    --night: #110d15;
+    --tile: #1a1520;
+    --grout: #2b2433;
+    --chalk: #f2ede6;
+    --muted: #a49cae;
+    --monad: #8f7bff;
+    --monad-soft: #2a2246;
+    --alarm: #ff6a4d;
+    --alarm-soft: #3a1a17;
+    --ok: #63d69e;
+    --ok-soft: #15301f;
+    --receipt: #f4eedf;
+    --ink: #26211b;
+    --roach: #7b4322;
+    --roach-dark: #4b2613;
+
+    --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    background: var(--night);
+    color: var(--chalk);
+  }
+  body {
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 20px 64px;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin-inline: auto;
+    display: grid;
+    gap: 20px;
+  }
+
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 24px;
+  }
+  .masthead h1 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: clamp(22px, 3.2vw, 30px);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .masthead h1 span {
+    color: var(--monad);
+  }
+  .masthead p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ---------- stage ---------- */
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    container-type: inline-size;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--grout);
+    background-color: var(--tile);
+    background-image:
+      linear-gradient(var(--grout) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grout) 1px, transparent 1px),
+      radial-gradient(120% 90% at 85% 10%, rgba(143, 123, 255, 0.12), transparent 60%);
+    background-size:
+      6.25cqw 6.25cqw,
+      6.25cqw 6.25cqw,
+      100% 100%;
+    isolation: isolate;
+  }
+  .stage:fullscreen {
+    border-radius: 0;
+    border: 0;
+  }
+
+  .scene {
+    position: absolute;
+    inset: 0;
+    padding: 5.5cqw 6cqw;
+    display: grid;
+    align-content: center;
+    gap: 2cqw;
+    opacity: 0;
+    transform: translateY(1.2cqw);
+    transition:
+      opacity 0.45s ease,
+      transform 0.45s ease;
+    pointer-events: none;
+  }
+  .scene.on {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 1.35cqw;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .eyebrow b {
+    color: var(--alarm);
+    font-weight: 600;
+  }
+  .eyebrow.good b {
+    color: var(--ok);
+  }
+
+  .big {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 5.6cqw;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 62cqw;
+  }
+  .mid {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 3.4cqw;
+    line-height: 1.12;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sub {
+    font-size: 2cqw;
+    color: var(--muted);
+    margin: 0;
+    max-width: 58cqw;
+  }
+  .strike {
+    text-decoration: line-through;
+    text-decoration-color: var(--alarm);
+    text-decoration-thickness: 0.35cqw;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8cqw;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 1.3cqw;
+    padding: 0.45cqw 1cqw;
+    border-radius: 99px;
+    border: 1px solid var(--monad);
+    color: var(--monad);
+    background: var(--monad-soft);
+  }
+
+  /* scene 2: doors */
+  .doors {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.6cqw;
+    max-width: 66cqw;
+  }
+  .door {
+    position: relative;
+    border: 1px solid var(--grout);
+    background: var(--night);
+    border-radius: 1cqw;
+    padding: 1.8cqw;
+    display: grid;
+    gap: 0.6cqw;
+    min-height: 15cqw;
+    align-content: start;
+  }
+  .door h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 2.1cqw;
+  }
+  .door p {
+    margin: 0;
+    font-size: 1.55cqw;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .stamp {
+    position: absolute;
+    right: 1.2cqw;
+    bottom: 1.2cqw;
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 1.5cqw;
+    color: var(--alarm);
+    border: 0.25cqw solid var(--alarm);
+    padding: 0.3cqw 0.8cqw;
+    border-radius: 0.5cqw;
+    transform: rotate(-9deg);
+    letter-spacing: 0.06em;
+  }
+
+  /* scene 3: receipt */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4cqw;
+    align-items: center;
+    max-width: 72cqw;
+  }
+  .receipt {
+    width: 30cqw;
+    background: var(--receipt);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 1.45cqw;
+    padding: 2cqw 2cqw 2.6cqw;
+    transform: rotate(2.5deg);
+    box-shadow: 0 1.5cqw 3cqw rgba(0, 0, 0, 0.45);
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% 96%,
+      95% 100%,
+      90% 96%,
+      85% 100%,
+      80% 96%,
+      75% 100%,
+      70% 96%,
+      65% 100%,
+      60% 96%,
+      55% 100%,
+      50% 96%,
+      45% 100%,
+      40% 96%,
+      35% 100%,
+      30% 96%,
+      25% 100%,
+      20% 96%,
+      15% 100%,
+      10% 96%,
+      5% 100%,
+      0 96%
+    );
+  }
+  .receipt .head {
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    border-bottom: 1px dashed var(--ink);
+    padding-bottom: 0.8cqw;
+    margin-bottom: 0.8cqw;
+  }
+  .receipt .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1cqw;
+    padding-block: 0.35cqw;
+  }
+  .receipt .row b {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .receipt .total {
+    border-top: 1px dashed var(--ink);
+    margin-top: 0.8cqw;
+    padding-top: 0.8cqw;
+    font-weight: 600;
+  }
+  .receipt .fine {
+    font-size: 1cqw;
+    opacity: 0.7;
+    margin-top: 0.8cqw;
+  }
+
+  /* scene 4: renewals calendar */
+  .months {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1cqw;
+    max-width: 70cqw;
+  }
+  .month {
+    border-radius: 0.9cqw;
+    padding: 1.2cqw 1cqw;
+    display: grid;
+    gap: 0.4cqw;
+    font-size: 1.35cqw;
+    border: 1px solid var(--grout);
+    background: var(--night);
+  }
+  .month b {
+    font-family: var(--display);
+    font-size: 1.7cqw;
+  }
+  .month.fail {
+    border-color: var(--alarm);
+    background: var(--alarm-soft);
+    color: var(--chalk);
+  }
+  .month.fail span {
+    color: var(--alarm);
+  }
+  .month.ok span {
+    color: var(--ok);
+  }
+  .quote {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 2.6cqw;
+    line-height: 1.2;
+    margin: 0;
+    max-width: 60cqw;
+    text-wrap: balance;
+  }
+  .quote small {
+    display: block;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 1.2cqw;
+    color: var(--muted);
+    margin-top: 0.8cqw;
+  }
+
+  /* scene 5: checkout + nft */
+  .duo {
+    display: flex;
+    gap: 2.4cqw;
+    align-items: stretch;
+  }
+  .card {
+    background: var(--night);
+    border: 1px solid var(--grout);
+    border-radius: 1.2cqw;
+    padding: 2cqw;
+    display: grid;
+    gap: 0.9cqw;
+    align-content: start;
+    font-size: 1.5cqw;
+  }
+  .card .k {
+    color: var(--muted);
+  }
+  .card .line {
+    display: flex;
+    justify-content: space-between;
+    gap: 2cqw;
+  }
+  .price {
+    font-family: var(--display);
+    font-size: 3.6cqw;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .price small {
+    font-family: var(--body);
+    font-size: 1.5cqw;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .btn-mock {
+    margin-top: 0.6cqw;
+    background: var(--monad);
+    color: var(--night);
+    font-weight: 600;
+    text-align: center;
+    border-radius: 0.8cqw;
+    padding: 1cqw;
+  }
+  .nft {
+    width: 22cqw;
+    border-radius: 1.2cqw;
+    padding: 2cqw;
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(143, 123, 255, 0.18) 0 0.6cqw,
+        transparent 0.6cqw 1.6cqw
+      ),
+      var(--monad-soft);
+    border: 1px solid var(--monad);
+    display: grid;
+    gap: 0.6cqw;
+    align-content: space-between;
+    font-size: 1.4cqw;
+  }
+  .nft .id {
+    font-family: var(--display);
+    font-size: 2.3cqw;
+    font-weight: 700;
+  }
+  .pill {
+    justify-self: start;
+    font-family: var(--mono);
+    font-size: 1.2cqw;
+    padding: 0.3cqw 0.9cqw;
+    border-radius: 99px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    border: 1px solid var(--ok);
+  }
+
+  /* scene 6: settlement race */
+  .race {
+    display: grid;
+    gap: 1.6cqw;
+    max-width: 64cqw;
+  }
+  .lane {
+    display: grid;
+    gap: 0.5cqw;
+    font-size: 1.6cqw;
+  }
+  .lane .bar {
+    height: 2.6cqw;
+    border-radius: 0.6cqw;
+  }
+  .lane.slow .bar {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--alarm) 0 2.2cqw,
+      var(--alarm-soft) 2.2cqw 2.9cqw
+    );
+    width: 100%;
+  }
+  .lane.fast .bar {
+    background: var(--ok);
+    width: 2.6cqw;
+  }
+  .lane .label {
+    display: flex;
+    justify-content: space-between;
+    gap: 2cqw;
+  }
+  .lane .label b {
+    font-family: var(--display);
+  }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1cqw;
+    font-size: 1.5cqw;
+    color: var(--muted);
+  }
+  .flow span {
+    color: var(--chalk);
+    background: var(--night);
+    border: 1px solid var(--grout);
+    padding: 0.5cqw 1cqw;
+    border-radius: 0.6cqw;
+  }
+
+  /* scene 7: code + toggles */
+  .code {
+    font-family: var(--mono);
+    font-size: 1.55cqw;
+    background: var(--night);
+    border: 1px solid var(--grout);
+    border-radius: 1cqw;
+    padding: 1.8cqw 2cqw;
+    line-height: 1.6;
+    white-space: pre;
+    margin: 0;
+  }
+  .code .c {
+    color: var(--muted);
+  }
+  .code .k {
+    color: var(--monad);
+  }
+  .code .s {
+    color: var(--ok);
+  }
+  .gates {
+    display: grid;
+    gap: 0.9cqw;
+    font-size: 1.55cqw;
+    min-width: 24cqw;
+  }
+  .gate {
+    display: flex;
+    justify-content: space-between;
+    gap: 2cqw;
+    align-items: center;
+    padding: 1cqw 1.4cqw;
+    border-radius: 0.8cqw;
+    background: var(--night);
+    border: 1px solid var(--grout);
+  }
+  .sw {
+    width: 4cqw;
+    height: 2.2cqw;
+    border-radius: 99px;
+    background: var(--grout);
+    position: relative;
+    flex: none;
+  }
+  .sw::after {
+    content: "";
+    position: absolute;
+    top: 0.3cqw;
+    left: 0.3cqw;
+    width: 1.6cqw;
+    height: 1.6cqw;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .sw.on {
+    background: var(--ok);
+  }
+  .sw.on::after {
+    left: 2.1cqw;
+    background: var(--night);
+  }
+
+  /* scene 8: terminal */
+  .term {
+    font-family: var(--mono);
+    font-size: 1.55cqw;
+    background: #0a080d;
+    border: 1px solid var(--grout);
+    border-radius: 1cqw;
+    padding: 1.8cqw 2cqw;
+    line-height: 1.75;
+    max-width: 64cqw;
+  }
+  .term .p {
+    color: var(--muted);
+  }
+  .term .r {
+    color: var(--alarm);
+  }
+  .term .g {
+    color: var(--ok);
+  }
+  .term .m {
+    color: var(--monad);
+  }
+
+  /* scene 9 */
+  .logo {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 9cqw;
+    line-height: 0.95;
+    margin: 0;
+    letter-spacing: -0.03em;
+  }
+  .logo span {
+    color: var(--monad);
+  }
+
+  /* ---------- roach ---------- */
+  .roach {
+    position: absolute;
+    width: 11cqw;
+    left: var(--x, 78%);
+    top: var(--y, 62%);
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scaleX(var(--f, 1));
+    transition:
+      left 1.1s cubic-bezier(0.6, 0.05, 0.3, 1),
+      top 1.1s cubic-bezier(0.6, 0.05, 0.3, 1),
+      transform 0.6s ease;
+    z-index: 5;
+    filter: drop-shadow(0 0.6cqw 0.6cqw rgba(0, 0, 0, 0.5));
+  }
+  .roach svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+  .roach .legs-a,
+  .roach .legs-b {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .roach.moving .legs-a {
+    animation: skitter 0.12s linear infinite alternate;
+  }
+  .roach.moving .legs-b {
+    animation: skitter 0.12s linear infinite alternate-reverse;
+  }
+  .roach .ant {
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+    animation: sniff 1.8s ease-in-out infinite alternate;
+  }
+  .roach .shades {
+    opacity: 0;
+    transition: opacity 0.4s ease 0.8s;
+  }
+  .roach.cool .shades {
+    opacity: 1;
+  }
+  @keyframes skitter {
+    from {
+      transform: rotate(-9deg);
+    }
+    to {
+      transform: rotate(9deg);
+    }
+  }
+  @keyframes sniff {
+    from {
+      transform: rotate(-6deg);
+    }
+    to {
+      transform: rotate(7deg);
+    }
+  }
+
+  .bubble {
+    position: absolute;
+    z-index: 6;
+    left: var(--bx, 70%);
+    top: var(--by, 40%);
+    transform: translate(-50%, -100%);
+    max-width: 28cqw;
+    background: var(--chalk);
+    color: var(--ink);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.55cqw;
+    line-height: 1.25;
+    padding: 1.1cqw 1.4cqw;
+    border-radius: 1.2cqw;
+    text-wrap: balance;
+    transition:
+      left 1.1s cubic-bezier(0.6, 0.05, 0.3, 1),
+      top 1.1s cubic-bezier(0.6, 0.05, 0.3, 1),
+      opacity 0.3s ease;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -1cqw;
+    border: 0.6cqw solid transparent;
+    border-top: 0.8cqw solid var(--chalk);
+    transform: translateX(-50%);
+  }
+  .bubble.swap {
+    opacity: 0;
+  }
+
+  .timecode {
+    position: absolute;
+    z-index: 7;
+    right: 1.6cqw;
+    top: 1.4cqw;
+    font-family: var(--mono);
+    font-size: 1.2cqw;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .stage.clean .timecode {
+    display: none;
+  }
+
+  /* ---------- transport ---------- */
+  .transport {
+    display: grid;
+    gap: 12px;
+  }
+  .segments {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px;
+  }
+  .seg {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--tile);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .seg i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: var(--monad);
+    opacity: 0.85;
+  }
+  .seg span {
+    position: relative;
+  }
+  .seg.cur span {
+    color: var(--chalk);
+  }
+  .seg:focus-visible,
+  .ctl:focus-visible {
+    outline: 2px solid var(--monad);
+    outline-offset: 2px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .ctl {
+    appearance: none;
+    font: 600 14px/1 var(--body);
+    color: var(--chalk);
+    background: var(--tile);
+    border: 1px solid var(--grout);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  .ctl:hover {
+    border-color: var(--monad);
+  }
+  .ctl.primary {
+    background: var(--monad);
+    color: var(--night);
+    border-color: var(--monad);
+    min-width: 112px;
+  }
+  .clock {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .clock b {
+    color: var(--chalk);
+    font-weight: 600;
+  }
+  .keys {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0;
+  }
+  .keys kbd {
+    font-family: var(--mono);
+    font-size: 12px;
+    border: 1px solid var(--grout);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--chalk);
+  }
+
+  .prompter {
+    border: 1px solid var(--grout);
+    border-radius: 12px;
+    background: var(--tile);
+    padding: 18px 20px;
+    display: grid;
+    gap: 6px;
+  }
+  .prompter .lbl {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .prompter p {
+    margin: 0;
+    font-size: clamp(18px, 2.2vw, 24px);
+    line-height: 1.45;
+    max-width: 70ch;
+  }
+
+  /* ---------- script + notes ---------- */
+  section h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 20px;
+    margin: 12px 0 6px;
+  }
+  section > p.lead {
+    color: var(--muted);
+    margin: 0 0 12px;
+    max-width: 70ch;
+  }
+
+  .script {
+    display: grid;
+    gap: 0;
+    border: 1px solid var(--grout);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .shot {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: 16px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--grout);
+    cursor: pointer;
+    background: var(--night);
+  }
+  .shot:first-child {
+    border-top: 0;
+  }
+  .shot.hd {
+    cursor: default;
+    background: var(--tile);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .shot.cur {
+    background: var(--monad-soft);
+  }
+  .shot:not(.hd):hover {
+    background: var(--tile);
+  }
+  .shot .tc {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .shot .tc b {
+    display: block;
+    color: var(--chalk);
+    font-family: var(--display);
+    font-size: 14px;
+    margin-top: 2px;
+  }
+  .shot .vo {
+    min-width: 0;
+  }
+  .shot .vo em {
+    display: block;
+    font-style: normal;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .shot .vis,
+  .shot .part {
+    min-width: 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .shot .part b {
+    color: var(--monad);
+    font-weight: 600;
+  }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .note {
+    border: 1px solid var(--grout);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: var(--night);
+    min-width: 0;
+  }
+  .note h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .note p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .note.warn {
+    border-color: var(--alarm);
+    background: var(--alarm-soft);
+  }
+  .note.warn h3 {
+    color: var(--alarm);
+  }
+  .note.warn p {
+    color: var(--chalk);
+  }
+
+  .sources {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted);
+    font-size: 14px;
+    display: grid;
+    gap: 4px;
+  }
+  .sources a {
+    color: var(--chalk);
+    text-decoration-color: var(--monad);
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+  }
+
+  /* record mode: only the stage, as large as the window allows */
+  body.rec .masthead,
+  body.rec .prompter,
+  body.rec section,
+  body.rec .keys {
+    display: none;
+  }
+  body.rec .wrap {
+    max-width: min(1600px, calc((100vh - 120px) * 16 / 9));
+  }
+
+  @media (max-width: 760px) {
+    .shot {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .shot.hd {
+      display: none;
+    }
+    .notes {
+      grid-template-columns: 1fr;
+    }
+    .clock {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene,
+    .roach,
+    .bubble {
+      transition: none;
+    }
+    .roach .ant,
+    .roach.moving .legs-a,
+    .roach.moving .legs-b {
+      animation: none;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Mon<span>Cart</span> · 90 saniye</h1>
+    <p>9 sahne × 10 saniye. Sunucu: bir hamam böceği.</p>
+  </header>
+
+  <div class="stage" id="stage" aria-live="polite">
+    <div class="timecode" id="tc">00:00 / 01:30</div>
+
+    <!-- 1 -->
+    <div class="scene on" data-i="0">
+      <div class="eyebrow">Sahne 1 · <b>Hamam böceği konuşuyor</b></div>
+      <h2 class="big">Nükleer savaştan sağ çıkarım.</h2>
+      <p class="sub">
+        Ama Türkiye'den bir SaaS'a aylık abonelik ödemesi almaya çalıştım. Orada öldüm.
+      </p>
+    </div>
+
+    <!-- 2 -->
+    <div class="scene" data-i="1">
+      <div class="eyebrow">Sahne 2 · <b>Global kapılar</b></div>
+      <div class="doors">
+        <div class="door">
+          <h3>PayPal</h3>
+          <p>2016'dan beri Türkiye'de hizmet vermiyor.</p>
+          <span class="stamp">KAPALI</span>
+        </div>
+        <div class="door">
+          <h3>Stripe</h3>
+          <p>Türkiye'deki şirkete hesap açmıyor.</p>
+          <span class="stamp">KAPALI</span>
+        </div>
+        <div class="door">
+          <h3>"Çözüm"</h3>
+          <p>ABD'de şirket kur, banka hesabı aç, iki ülkede vergi düşün.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="scene" data-i="2">
+      <div class="eyebrow">Sahne 3 · <b>Yerli POS'un faturası</b></div>
+      <div class="split">
+        <h2 class="mid">Para var.<br />Sadece sende değil.</h2>
+        <div class="receipt" role="img" aria-label="Yerli ödeme kuruluşu kesinti fişi">
+          <div class="head">ÖDEME FİŞİ</div>
+          <div class="row"><span>Yabancı kart komisyonu</span><b>%3,99</b></div>
+          <div class="row"><span>Kur çevrim kesintisi</span><b>%2,10</b></div>
+          <div class="row"><span>Standart blokaj</span><b>21 gün</b></div>
+          <div class="row"><span>Ödeme kısıtı</span><b>"risk"</b></div>
+          <div class="row total"><span>Gerekçe</span><b>yok</b></div>
+          <div class="fine">Oranlar örnektir, sözleşmeye göre değişir.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="scene" data-i="3">
+      <div class="eyebrow">Sahne 4 · <b>Abonelik kâbusu</b></div>
+      <div class="months">
+        <div class="month ok"><b>Oca</b><span>yenilendi</span></div>
+        <div class="month fail"><b>Şub</b><span>kart reddedildi</span></div>
+        <div class="month fail"><b>Mar</b><span>kartın süresi doldu</span></div>
+        <div class="month ok"><b>Nis</b><span>yenilendi</span></div>
+        <div class="month fail"><b>May</b><span>banka onayı yok</span></div>
+        <div class="month fail"><b>Haz</b><span>müşteri gitti</span></div>
+      </div>
+      <p class="quote">
+        Hesap taşıyan bir yazılım firması, 1000'den fazla müşterisinin aboneliğini tek tek yeniden
+        kurmuş.<small>Kaynak: Şikayetvar'daki bir firma şikayeti</small>
+      </p>
+    </div>
+
+    <!-- 5 -->
+    <div class="scene" data-i="4">
+      <div class="eyebrow good">Sahne 5 · <b>MonCart</b></div>
+      <div class="duo">
+        <div class="card" style="width: 30cqw">
+          <div class="line"><span class="k">Plan</span><span>Pro</span></div>
+          <div class="price">49 <small>USDC / ay</small></div>
+          <div class="line"><span class="k">Ağ</span><span>Monad</span></div>
+          <div class="line">
+            <span class="k">Aracı</span><span>yok, doğrudan şirket cüzdanı</span>
+          </div>
+          <div class="btn-mock">Cüzdanla abone ol</div>
+        </div>
+        <div class="nft">
+          <span class="pill">Aktif</span>
+          <div>
+            <div class="id">Abonelik #0042</div>
+            <div>Pro Plan · 24 Kasım'a kadar</div>
+          </div>
+          <div class="k" style="color: var(--muted)">On-chain, müşterinin cüzdanında</div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip">PlanFactory</span><span class="chip">SubscriptionRegistry</span>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="scene" data-i="5">
+      <div class="eyebrow good">Sahne 6 · <b>Otomatik yenileme</b></div>
+      <div class="flow">
+        <span>Tek imza</span>→<span>Her ay otomatik yenileme</span>→<span
+          >Para şirket cüzdanında</span
+        >
+      </div>
+      <div class="race">
+        <div class="lane slow">
+          <div class="label"><span>Yerli POS</span><b>21 gün blokaj</b></div>
+          <div class="bar"></div>
+        </div>
+        <div class="lane fast">
+          <div class="label"><span>MonCart on Monad</span><b>~1 saniye</b></div>
+          <div class="bar"></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip">AutopayModule · Permit2</span><span class="chip">FeeCollector</span>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="scene" data-i="6">
+      <div class="eyebrow good">Sahne 7 · <b>Ödeme = erişim</b></div>
+      <div class="duo">
+        <pre class="code"><span class="c">// Ödeme geldiyse açık, gelmediyse kapalı</span>
+<span class="k">const</span> { enabled } = useEntitlement(<span class="s">"pro"</span>);
+
+<span class="k">if</span> (!enabled) <span class="k">return</span> &lt;Upgrade /&gt;;</pre>
+        <div class="gates">
+          <div class="gate"><span>Pro Dashboard</span><span class="sw on"></span></div>
+          <div class="gate"><span>API · 10.000 istek/ay</span><span class="sw on"></span></div>
+          <div class="gate"><span>Kurumsal SSO</span><span class="sw"></span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip">@moncart/react</span><span class="chip">@moncart/node</span
+        ><span class="chip">İmzalı webhook'lar</span>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="scene" data-i="7">
+      <div class="eyebrow good">Sahne 8 · <b>Ajanlar da öder</b></div>
+      <div class="term">
+        <span class="p">agent $</span> GET /api/premium <br /><span class="r"
+          >402 Payment Required</span
+        >
+        · 0.001 USDC <br /><span class="p">agent $</span> imzalandı · bütçe 150 USDC, kalan 149.999
+        <br /><span class="g">200 OK</span> · <span class="m">x402 · Monad</span>
+      </div>
+      <div class="chips">
+        <span class="chip">x402</span><span class="chip">SessionVault</span
+        ><span class="chip">Limitli yetki (mandate)</span><span class="chip">MCP</span>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="scene" data-i="8">
+      <div class="eyebrow good">Sahne 9 · <b>Kapanış</b></div>
+      <p class="sub">
+        <span class="strike">PayPal gitti.</span> <span class="strike">POS bloke etti.</span>
+        <span class="strike">Kart reddedildi.</span>
+      </p>
+      <h2 class="logo">Mon<span>Cart</span></h2>
+      <p class="sub">
+        Monad üzerinde abonelik, erişim ve ajan ödemeleri. Hamam böceği kadar dayanıklı.
+      </p>
+    </div>
+
+    <div class="bubble" id="bubble">Dinozorlar gitti, ben kaldım.</div>
+    <div class="roach" id="roach" aria-hidden="true">
+      <svg viewBox="0 0 130 80">
+        <path
+          class="ant"
+          d="M104 34 C 116 22, 122 14, 130 2"
+          fill="none"
+          stroke="var(--roach-dark)"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <path
+          class="ant"
+          d="M104 46 C 116 58, 122 66, 130 78"
+          fill="none"
+          stroke="var(--roach-dark)"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <g
+          class="legs-a"
+          stroke="var(--roach-dark)"
+          stroke-width="3"
+          stroke-linecap="round"
+          fill="none"
+        >
+          <path d="M72 24 L84 6" />
+          <path d="M50 22 L44 4" />
+          <path d="M34 56 L18 74" />
+        </g>
+        <g
+          class="legs-b"
+          stroke="var(--roach-dark)"
+          stroke-width="3"
+          stroke-linecap="round"
+          fill="none"
+        >
+          <path d="M72 56 L84 74" />
+          <path d="M50 58 L44 76" />
+          <path d="M34 24 L18 6" />
+        </g>
+        <ellipse cx="56" cy="40" rx="40" ry="20" fill="var(--roach)" />
+        <path d="M18 40 L88 40" stroke="var(--roach-dark)" stroke-width="2" />
+        <ellipse cx="44" cy="33" rx="18" ry="5" fill="#a4643a" opacity="0.45" />
+        <ellipse cx="96" cy="40" rx="11" ry="13" fill="var(--roach-dark)" />
+        <g class="shades">
+          <rect x="94" y="29" width="10" height="9" rx="2" fill="#0a080d" />
+          <rect x="94" y="42" width="10" height="9" rx="2" fill="#0a080d" />
+          <path d="M99 38 L99 42" stroke="#0a080d" stroke-width="2" />
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="transport">
+    <div class="segments" id="segments"></div>
+    <div class="controls">
+      <button class="ctl" id="prev" type="button" aria-label="Önceki sahne">← Önceki</button>
+      <button class="ctl primary" id="play" type="button">▶ Oynat</button>
+      <button class="ctl" id="next" type="button" aria-label="Sonraki sahne">Sonraki →</button>
+      <button class="ctl" id="restart" type="button">Baştan</button>
+      <button class="ctl" id="rec" type="button">Kayıt modu</button>
+      <button class="ctl" id="full" type="button">Tam ekran</button>
+      <span class="clock" id="clock"><b>00:00</b> / 01:30</span>
+    </div>
+    <p class="keys">
+      <kbd>Boşluk</kbd> oynat/durdur · <kbd>←</kbd> <kbd>→</kbd> sahne · <kbd>R</kbd> baştan ·
+      <kbd>K</kbd> kayıt modu · <kbd>F</kbd> tam ekran
+    </p>
+  </div>
+
+  <div class="prompter">
+    <span class="lbl" id="plbl">Seslendirme · Sahne 1</span>
+    <p id="ptext"></p>
+  </div>
+
+  <section>
+    <h2>Çekim senaryosu</h2>
+    <p class="lead">
+      Her satır 10 saniye. Seslendirme metinleri yaklaşık 22–26 kelime, rahat bir tempoyla 10
+      saniyeye sığıyor. Bir satıra tıklayınca o sahneye gidilir.
+    </p>
+    <div class="script" id="script">
+      <div class="shot hd">
+        <span>Süre</span><span>Seslendirme</span><span>Ekranda</span
+        ><span>Projenin anlattığı kısmı</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Jüriden gelebilecek sorular</h2>
+    <div class="notes">
+      <div class="note">
+        <h3>Neden Stripe değil?</h3>
+        <p>
+          Stripe Türkiye'de kurulu şirketlere hesap açmıyor. Kullanmak için ABD'de şirket kurmak
+          gerekiyor. PayPal da 2016'dan beri Türkiye'de hizmet vermiyor.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Neden iyzico veya PayTR değil?</h3>
+        <p>
+          Yerli kuruluşlar yurt içi kartta iyi çalışıyor. Yabancı kartta komisyona kur kesintisi
+          ekleniyor, para blokajda bekliyor ve abonelik taşıma gibi işlemler elle yapılıyor.
+          MonCart'ta para aracıda durmuyor.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Neden Monad?</h3>
+        <p>
+          Blok süresi yaklaşık 400 ms ve gas ucuz. Bu sayede her yenileme ve ajanların her API
+          çağrısı kullanıcıyı bekletmeden zincir üzerinde kapanabiliyor. EVM uyumlu olduğu için
+          mevcut cüzdanlar ve araçlar doğrudan çalışıyor.
+        </p>
+      </div>
+      <div class="note warn">
+        <h3>"Kripto ile ödeme Türkiye'de yasak değil mi?"</h3>
+        <p>
+          TCMB'nin 2021 yönetmeliği kripto varlıkların ödemede doğrudan veya dolaylı kullanımını
+          yasaklıyor. Cevabı sunumdan önce netleştirin: hedef kitle yurt dışı tüzel kişiliğiyle
+          global müşteriye satış yapan ekipler mi, yoksa yurt içi tahsilat mı? Bu bir hukuki görüş
+          gerektirir.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Kaynaklar</h2>
+    <ol class="sources">
+      <li>
+        <a
+          href="https://webrazzi.com/2016/06/01/stripe-ceosu-paypalin-turkiyede-kapanmasiyla-atlas-yogun-ilgi-gormeye-basladi/"
+          target="_blank"
+          rel="noopener"
+          >Webrazzi: PayPal'ın Türkiye'den çekilmesi ve Stripe Atlas (2016)</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://www.evrensel.net/haber/5992453/stripe-paypali-satin-aliyor-paypal-turkiyeye-geri-mi-donuyor"
+          target="_blank"
+          rel="noopener"
+          >Evrensel: PayPal'ın Türkiye'de neden faaliyet göstermediği (2026)</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://www.iyzico.com/blog/iste-iyzicoyla-ilgili-tum-sorularinizin-cevaplari"
+          target="_blank"
+          rel="noopener"
+          >iyzico blog: standart blokaj süresi</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://korvo.freshservice.com/support/solutions/articles/27000094547"
+          target="_blank"
+          rel="noopener"
+          >Entegratör dokümanı: yabancı kart %3,99 ve kur çevrim %2,10 (tarihsiz)</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://www.sikayetvar.com/iyzico/iyzicodan-yeni-hesaba-abonelik-transferi-reddi-ve-destek-yaniti-olmamasi"
+          target="_blank"
+          rel="noopener"
+          >Şikayetvar: abonelik transferi reddi, 1000+ müşteri</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://www.sikayetvar.com/iyzico/odeme-blokaji-ve-yanitsiz-destek-magduriyeti"
+          target="_blank"
+          rel="noopener"
+          >Şikayetvar: gerekçesiz ödeme kısıtı</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://kpmgvergi.com/yayinlar/mali-bultenler/vergi/turkiye-cumhuriyet-merkez-bankasindan-odemelerde-kripto-varliklarin-kullanilmamasina-dair-yonetmelik-16-nisan-2021-tarihli-resm-gazete-de-yayimlandi/1093"
+          target="_blank"
+          rel="noopener"
+          >KPMG: Ödemelerde Kripto Varlıkların Kullanılmamasına Dair Yönetmelik (2021)</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://docs.monad.xyz/getting-started/network-information"
+          target="_blank"
+          rel="noopener"
+          >Monad dokümanı: ağ bilgileri</a
+        >
+      </li>
+    </ol>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var SCENE_MS = 10000;
+    var scenes = [
+      {
+        title: "Kanca",
+        vo: "Ben hamam böceğiyim. Dinozorları gördüm, nükleer kışı atlattım. Ama Türkiye'den bir yazılım şirketine aylık abonelik ödemesi yapmaya çalıştım. Orada öldüm.",
+        vis: "Gece, ıslak hamam fayansı. Böcek köşeden girer.",
+        part: "Problem kancası",
+        bubble: "Dinozorlar gitti, ben kaldım.",
+        x: 80,
+        y: 66,
+        r: -8,
+        f: -1,
+      },
+      {
+        title: "Global kapılar",
+        vo: "PayPal 2016'da toplandı gitti. Stripe hiç gelmedi. Çözüm diye ne öneriyorlar? Amerika'da şirket kur. Kardeşim, ben lavabonun altında yaşıyorum.",
+        vis: "PayPal ve Stripe kartlarına KAPALI damgası.",
+        part: "Neden Stripe değil",
+        bubble: "PayPal gitti, ben kaldım.",
+        x: 85,
+        y: 78,
+        r: 6,
+        f: -1,
+      },
+      {
+        title: "Yerli POS",
+        vo: "Yerli tarafta durum şu: yabancı kartta yüzde dört komisyon, üstüne kur kesintisi. Para üç hafta blokede. Bazen ödeme durur ve sebebini kimse söylemez.",
+        vis: "Kesinti fişi: %3,99, %2,10, 21 gün, gerekçe yok.",
+        part: "iyzico ve benzerlerinin sorunları",
+        bubble: "21 gün mü? Ben o sürede iki nesil büyütürüm.",
+        x: 30,
+        y: 82,
+        r: 0,
+        f: 1,
+      },
+      {
+        title: "Abonelik kâbusu",
+        vo: "Abonelikte iş daha da karışık. Kart reddedilir, süresi dolar, banka onay istemez. Hesap taşıyan bir firma bin müşterisinin aboneliğini tek tek baştan kurmuş.",
+        vis: "Kırmızı aylar takvimi, 1000+ müşteri alıntısı.",
+        part: "Tekrarlayan ödemenin zorluğu",
+        bubble: "Kartın süresi dolar. Benim ömrüm dolmaz.",
+        x: 86,
+        y: 30,
+        r: 150,
+        f: 1,
+      },
+      {
+        title: "MonCart",
+        vo: "İşte MonCart. Şirket planını Monad üzerinde tanımlar. Müşteri cüzdanını bağlar, USDC ile öder ve aboneliği zincir üstünde bir NFT olarak cebine girer.",
+        vis: "Checkout kartı: Pro, 49 USDC/ay. Yanında abonelik NFT'si.",
+        part: "PlanFactory, SubscriptionRegistry",
+        bubble: "Cüzdanım yok ama bayıldım.",
+        x: 86,
+        y: 74,
+        r: -4,
+        f: -1,
+      },
+      {
+        title: "Otomatik yenileme",
+        vo: "Müşteri bir kere imzalar, yenilemeler kendiliğinden olur. Para aracıda beklemez, saniyeler içinde doğrudan şirketin cüzdanına düşer. Yirmi bir gün değil, bir saniye.",
+        vis: "Yarış çubukları: 21 gün blokaj ve ~1 saniye.",
+        part: "AutopayModule (Permit2), FeeCollector",
+        bubble: "Işık yanınca kaçışımdan bile hızlı.",
+        x: 84,
+        y: 84,
+        r: 0,
+        f: -1,
+      },
+      {
+        title: "Ödeme = erişim",
+        vo: "Geliştiriciye tek satır kalıyor: useEntitlement. Ödeme geldiyse özellik açılır, gelmediyse kapanır. Elle kontrol yok, Excel yok, WhatsApp'tan dekont yok.",
+        vis: "Kod satırı ve açık/kapalı özellik anahtarları.",
+        part: "React ve Node SDK, entitlement, webhook'lar",
+        bubble: "Excel yok, dekont yok. Ben de rahatım.",
+        x: 88,
+        y: 20,
+        r: 170,
+        f: 1,
+      },
+      {
+        title: "Ajanlar da öder",
+        vo: "Yapay zekâ ajanlarının kartı yok ama cüzdanı var. API'ye istek atar, 402 alır, limitli yetkisiyle kuruşu kuruşuna öder. Hepsi MCP ile Claude'un içinden.",
+        vis: "Terminal: 402 Payment Required, imza, 200 OK.",
+        part: "x402, SessionVault, mandate, MCP",
+        bubble: "Ajanın da kartı yok, benim de. Ama onun cüzdanı var.",
+        x: 84,
+        y: 76,
+        r: -6,
+        f: -1,
+      },
+      {
+        title: "Kapanış",
+        vo: "PayPal gitti, POS bloke etti, kart reddedildi. Biz hâlâ buradayız. Monad üzerinde, hamam böceği kadar dayanıklı bir ödeme altyapısı: MonCart.",
+        vis: "Üstü çizili dertler, MonCart logosu, gözlüklü böcek.",
+        part: "Vizyon ve çağrı",
+        bubble: "Biz kalıcıyız.",
+        x: 78,
+        y: 70,
+        r: -4,
+        f: -1,
+        cool: true,
+      },
+    ];
+
+    var stage = document.getElementById("stage");
+    var sceneEls = stage.querySelectorAll(".scene");
+    var roach = document.getElementById("roach");
+    var bubble = document.getElementById("bubble");
+    var segWrap = document.getElementById("segments");
+    var script = document.getElementById("script");
+    var playBtn = document.getElementById("play");
+    var clock = document.getElementById("clock");
+    var tc = document.getElementById("tc");
+    var plbl = document.getElementById("plbl");
+    var ptext = document.getElementById("ptext");
+
+    var segs = [],
+      rows = [];
+    scenes.forEach(function (s, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "seg";
+      b.setAttribute("aria-label", "Sahne " + (i + 1) + ": " + s.title);
+      b.innerHTML = "<i></i><span>" + (i + 1) + "</span>";
+      b.addEventListener("click", function () {
+        go(i);
+      });
+      segWrap.appendChild(b);
+      segs.push(b);
+
+      var r = document.createElement("div");
+      r.className = "shot";
+      r.innerHTML =
+        '<div class="tc">' +
+        fmt(i * 10) +
+        "–" +
+        fmt(i * 10 + 10) +
+        "<b>" +
+        s.title +
+        "</b></div>" +
+        '<div class="vo">' +
+        s.vo +
+        "<em>Böcek: “" +
+        s.bubble +
+        "”</em></div>" +
+        '<div class="vis">' +
+        s.vis +
+        "</div>" +
+        '<div class="part"><b>' +
+        s.part +
+        "</b></div>";
+      r.addEventListener("click", function () {
+        go(i);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      script.appendChild(r);
+      rows.push(r);
+    });
+
+    var idx = 0,
+      t = 0,
+      playing = false,
+      last = performance.now(),
+      moveTimer = null;
+
+    function fmt(sec) {
+      sec = Math.floor(sec);
+      var m = Math.floor(sec / 60),
+        s = sec % 60;
+      return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+    }
+
+    function show(i) {
+      sceneEls.forEach(function (el, j) {
+        el.classList.toggle("on", j === i);
+      });
+      rows.forEach(function (r, j) {
+        r.classList.toggle("cur", j === i);
+      });
+      segs.forEach(function (s, j) {
+        s.classList.toggle("cur", j === i);
+      });
+      var s = scenes[i];
+      roach.style.setProperty("--x", s.x + "%");
+      roach.style.setProperty("--y", s.y + "%");
+      roach.style.setProperty("--r", s.r + "deg");
+      roach.style.setProperty("--f", s.f);
+      roach.classList.toggle("cool", !!s.cool);
+      roach.classList.add("moving");
+      clearTimeout(moveTimer);
+      moveTimer = setTimeout(function () {
+        roach.classList.remove("moving");
+      }, 1100);
+
+      var bx = s.x,
+        by = s.y - 9;
+      if (s.y < 40) by = s.y + 22;
+      bx = Math.min(Math.max(bx - 6, 16), 82);
+      bubble.classList.add("swap");
+      setTimeout(function () {
+        bubble.textContent = s.bubble;
+        bubble.style.setProperty("--bx", bx + "%");
+        bubble.style.setProperty("--by", by + "%");
+        bubble.classList.remove("swap");
+      }, 250);
+
+      plbl.textContent = "Seslendirme · Sahne " + (i + 1) + " · " + s.title;
+      ptext.textContent = s.vo;
+    }
+
+    function go(i) {
+      idx = Math.max(0, Math.min(scenes.length - 1, i));
+      t = 0;
+      show(idx);
+      paint();
+    }
+
+    function setPlaying(p) {
+      playing = p;
+      playBtn.textContent = p ? "❚❚ Durdur" : "▶ Oynat";
+      last = performance.now();
+    }
+
+    function paint() {
+      segs.forEach(function (s, j) {
+        var w = j < idx ? 100 : j === idx ? (t / SCENE_MS) * 100 : 0;
+        s.firstChild.style.width = w + "%";
+      });
+      var now = fmt(idx * 10 + t / 1000);
+      clock.innerHTML = "<b>" + now + "</b> / 01:30";
+      tc.textContent = now + " / 01:30";
+    }
+
+    function tick(now) {
+      if (playing) {
+        t += now - last;
+        if (t >= SCENE_MS) {
+          if (idx < scenes.length - 1) {
+            idx++;
+            t -= SCENE_MS;
+            show(idx);
+          } else {
+            t = SCENE_MS;
+            setPlaying(false);
+          }
+        }
+        paint();
+      }
+      last = now;
+      requestAnimationFrame(tick);
+    }
+
+    function toggle() {
+      if (!playing && idx === scenes.length - 1 && t >= SCENE_MS) go(0);
+      setPlaying(!playing);
+    }
+
+    function toggleRec() {
+      document.body.classList.toggle("rec");
+      stage.classList.toggle("clean", document.body.classList.contains("rec"));
+    }
+
+    function full() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(function () {});
+        return;
+      }
+      if (stage.requestFullscreen) stage.requestFullscreen().catch(function () {});
+    }
+
+    playBtn.addEventListener("click", toggle);
+    document.getElementById("prev").addEventListener("click", function () {
+      go(idx - 1);
+    });
+    document.getElementById("next").addEventListener("click", function () {
+      go(idx + 1);
+    });
+    document.getElementById("restart").addEventListener("click", function () {
+      go(0);
+      setPlaying(false);
+    });
+    document.getElementById("rec").addEventListener("click", toggleRec);
+    document.getElementById("full").addEventListener("click", full);
+
+    document.addEventListener("keydown", function (e) {
+      if (e.target.closest && e.target.closest("input, textarea")) return;
+      var k = e.key.toLowerCase();
+      if (e.key === " ") {
+        e.preventDefault();
+        toggle();
+      } else if (e.key === "ArrowRight") go(idx + 1);
+      else if (e.key === "ArrowLeft") go(idx - 1);
+      else if (k === "r") {
+        go(0);
+        setPlaying(false);
+      } else if (k === "k") toggleRec();
+      else if (k === "f") full();
+    });
+
+    show(0);
+    paint();
+    requestAnimationFrame(tick);
+  })();
+</script>
