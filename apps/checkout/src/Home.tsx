@@ -1,6 +1,6 @@
-import { getNetwork } from "@monavisa/core";
+import { MONAD_CHAIN_ID, MONAD_TESTNET_CHAIN_ID, getChain, getNetwork } from "@monavisa/core";
 import { type FormEvent, useState } from "react";
-import { chain, chainId, dashboardUrl, demoPlanUrl, networkName, repoUrl } from "./config.js";
+import { chainId, dashboardUrl, demoPlanUrl, repoUrl } from "./config.js";
 
 const AUDIENCES = [
   {
@@ -56,8 +56,11 @@ const CONTRACTS = [
 ] as const;
 
 export function Home() {
-  const contracts = getNetwork(chainId).contracts;
-  const explorer = chain.blockExplorers?.default.url;
+  // The network this site runs on comes first.
+  const networks = [
+    { id: MONAD_CHAIN_ID, name: "Monad Mainnet" },
+    { id: MONAD_TESTNET_CHAIN_ID, name: "Monad Testnet" },
+  ].sort((a, b) => Number(b.id === chainId) - Number(a.id === chainId));
 
   return (
     <main className="home">
@@ -136,25 +139,38 @@ export function Home() {
       </section>
 
       <section className="home-section" aria-labelledby="contracts">
-        <h2 id="contracts">Canlı kontratlar · {networkName}</h2>
-        <dl className="contracts">
-          {CONTRACTS.map(([label, key]) => {
-            const address = contracts[key];
-            if (!address) return null;
-            return (
-              <div key={key}>
-                <dt>{label}</dt>
-                <dd className="mono">
-                  {explorer ? (
-                    <a href={`${explorer}/address/${address}`}>{address}</a>
-                  ) : (
-                    address
-                  )}
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
+        <h2 id="contracts">Canlı kontratlar</h2>
+        {networks.map((network) => {
+          const { contracts, usdc } = getNetwork(network.id);
+          const explorer = getChain(network.id).blockExplorers?.default.url;
+          const rows: [string, string | null][] = [
+            ...CONTRACTS.map(([label, key]) => [label, contracts[key]] as [string, string | null]),
+            ["USDC", usdc.address],
+          ];
+          return (
+            <div key={network.id} className="network-contracts">
+              <h3>
+                {network.name} <span className="muted">· chain {network.id}</span>
+              </h3>
+              <dl className="contracts">
+                {rows.map(([label, address]) =>
+                  address ? (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd className="mono">
+                        {explorer ? (
+                          <a href={`${explorer}/address/${address}`}>{address}</a>
+                        ) : (
+                          address
+                        )}
+                      </dd>
+                    </div>
+                  ) : null,
+                )}
+              </dl>
+            </div>
+          );
+        })}
         <p className="muted small">
           Kontratlar henüz audit edilmedi. Audit tamamlanana kadar küçük tutarlarla kullan.
         </p>

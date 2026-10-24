@@ -328,6 +328,14 @@
 .contracts a {
   color: inherit;
 }
+.network-contracts {
+  display: grid;
+  gap: 12px;
+}
+.network-contracts h3 {
+  margin: 0;
+  font-size: var(--text-subheading);
+}
 .small {
   font-size: var(--text-small);
 }
